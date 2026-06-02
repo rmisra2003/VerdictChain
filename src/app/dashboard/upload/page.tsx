@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { mockCases } from "@/data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
-import { isApiConfigured, uploadEvidenceToApi } from "@/lib/api";
+import { getTatumWalrusJobStatus, isApiConfigured, uploadEvidenceToApi } from "@/lib/api";
 
 interface UploadReceipt {
   filename: string;
@@ -22,6 +22,7 @@ interface UploadReceipt {
   walrusBlob: string;
   walrusJobId?: string;
   walrusStatus?: string;
+  tatumStatusCheckedAt?: string;
   blockHeight: string;
   timestamp: string;
   source: "api" | "simulation";
@@ -41,6 +42,8 @@ export default function EvidenceUploadPage() {
   const [step, setStep] = useState(0);
   const [receipt, setReceipt] = useState<UploadReceipt | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -100,6 +103,7 @@ export default function EvidenceUploadPage() {
     const selectedFile = file;
     setLoading(true);
     setErrorMessage("");
+    setStatusError("");
     setStep(1);
 
     if (!isApiConfigured()) {
@@ -119,7 +123,7 @@ export default function EvidenceUploadPage() {
         walrusBlob: result.evidence.walrus_blob_id || result.walrus_metadata.blob_id || "pending",
         walrusJobId: result.walrus_metadata.job_id,
         walrusStatus: result.walrus_metadata.status,
-        blockHeight: "Tatum Sui Mainnet",
+        blockHeight: "Tatum Sui Devnet RPC",
         timestamp: result.evidence.created_at,
         source: "api",
       });
@@ -129,6 +133,34 @@ export default function EvidenceUploadPage() {
       setErrorMessage(error instanceof Error ? error.message : "Evidence upload failed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshTatumStatus = async () => {
+    if (!receipt?.walrusJobId) return;
+    setStatusLoading(true);
+    setStatusError("");
+
+    try {
+      const result = await getTatumWalrusJobStatus(receipt.walrusJobId);
+      const nextStatus = result.status || result.state || receipt.walrusStatus || "UNKNOWN";
+      const nextBlob =
+        typeof result.blobId === "string"
+          ? result.blobId
+          : typeof result.blob_id === "string"
+            ? result.blob_id
+            : receipt.walrusBlob;
+
+      setReceipt({
+        ...receipt,
+        walrusStatus: nextStatus,
+        walrusBlob: nextBlob,
+        tatumStatusCheckedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "Tatum status refresh failed.");
+    } finally {
+      setStatusLoading(false);
     }
   };
 
@@ -344,9 +376,15 @@ export default function EvidenceUploadPage() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Sui Net Block Height:</span>
+                    <span className="text-zinc-500">Sui Seal Path:</span>
                     <span className="text-zinc-300 font-mono">{receipt.blockHeight}</span>
                   </div>
+                  {receipt.suiTx && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-zinc-500">Sui Tx Digest:</span>
+                      <span className="text-accent-blue font-mono text-[10px] text-right break-all">{receipt.suiTx}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Walrus Proof Index:</span>
                     <span className="text-accent-green font-mono text-[10px]">{receipt.walrusBlob}</span>
@@ -363,14 +401,40 @@ export default function EvidenceUploadPage() {
                       <span className="text-zinc-300 font-mono text-[10px]">{receipt.walrusStatus}</span>
                     </div>
                   )}
+                  {receipt.tatumStatusCheckedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Tatum Status Check:</span>
+                      <span className="text-zinc-300 font-mono text-[10px]">
+                        {new Date(receipt.tatumStatusCheckedAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="bg-black/60 p-3 rounded-lg border border-border mt-4 font-mono text-[9px] text-zinc-500">
-                [INFO] BROADCASTING COMPLETED {"->"} Tatum Walrus Interface: {receipt.source === "api" ? "mainnet upload job created" : "committed to wallet 0x8fa3f92b..."}
+                [INFO] TATUM DATA API {"->"} Walrus upload job {receipt.walrusJobId || "simulation"} | provider={receipt.source === "api" ? "tatum" : "simulation"} | sui_rpc=tatum_devnet_gateway
               </div>
 
-              <div className="mt-4 flex justify-end">
+              {statusError && (
+                <div className="mt-3 rounded-lg border border-accent-red/30 bg-accent-red/10 p-3 text-[11px] text-accent-red">
+                  {statusError}
+                </div>
+              )}
+
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                {receipt.walrusJobId && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="gap-2"
+                    onClick={refreshTatumStatus}
+                    disabled={statusLoading}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${statusLoading ? "animate-spin" : ""}`} />
+                    Refresh Tatum Job
+                  </Button>
+                )}
                 <Button variant="secondary" size="sm" onClick={() => setReceipt(null)}>
                   Ingest Another File
                 </Button>

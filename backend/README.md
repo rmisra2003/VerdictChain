@@ -93,7 +93,7 @@ SUI_GAS_BUDGET=10000000
 # Tatum Infrastructure Keys
 TATUM_API_KEY=your-tatum-api-key
 TATUM_API_URL=https://api.tatum.io
-TATUM_RPC_URL=https://fullnode.devnet.sui.io:443
+TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
 TATUM_MCP_URL=https://mcp.tatum.io
 
 # DeepSeek AI Integration

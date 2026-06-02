@@ -74,6 +74,17 @@ export interface VerifyApiResponse {
   };
 }
 
+export interface TatumWalrusJobStatus {
+  job_id?: string;
+  jobId?: string;
+  provider?: string;
+  status?: string;
+  state?: string;
+  blobId?: string;
+  blob_id?: string;
+  [key: string]: unknown;
+}
+
 export function isApiConfigured(): boolean {
   return API_BASE_URL.length > 0;
 }
@@ -146,6 +157,25 @@ export async function uploadEvidenceToApi(file: File): Promise<EvidenceUploadApi
   }
 
   return (await response.json()) as EvidenceUploadApiResponse;
+}
+
+export async function getTatumWalrusJobStatus(jobId: string): Promise<TatumWalrusJobStatus> {
+  const session = await ensureApiSession();
+  const response = await fetch(
+    `${API_BASE_URL}/api/evidence/walrus/status/${encodeURIComponent(jobId)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Tatum Walrus status lookup failed (${response.status}): ${detail}`);
+  }
+
+  return (await response.json()) as TatumWalrusJobStatus;
 }
 
 export async function verifyEvidenceHash(

@@ -28,7 +28,7 @@ SUI_NOTARY_PACKAGE_ID=0x5f8a69e8004ee5aa943dccaf5b0fa336dfffcf5b320aa13b081b772e
 SUI_CLI_ENABLED=true
 TATUM_API_KEY=...
 TATUM_API_URL=https://api.tatum.io
-TATUM_RPC_URL=https://fullnode.devnet.sui.io:443
+TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
 DEEPSEEK_API_KEY=...
 CORS_ORIGINS=["https://your-frontend.vercel.app"]
 ```
@@ -64,6 +64,7 @@ NEXT_PUBLIC_ENABLE_DEMO_BOOTSTRAP=true
    - SHA-256 hash
    - Walrus blob or pending blob id
    - Tatum Walrus job id
+   - Refreshable Tatum Walrus job status
    - devnet Sui transaction status
 4. Open `/verify`.
 5. Upload the same file and verify the SHA-256 fingerprint through the backend.

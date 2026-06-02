@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     # ── Tatum ───────────────────────────────────────────────────────────
     TATUM_API_KEY: str = "your-tatum-api-key"
     TATUM_API_URL: str = "https://api.tatum.io"
-    TATUM_RPC_URL: str = "https://fullnode.devnet.sui.io:443"
+    TATUM_RPC_URL: str = "https://sui-devnet.gateway.tatum.io"
     TATUM_MCP_URL: str = "https://mcp.tatum.io"
 
     # ── DeepSeek AI ─────────────────────────────────────────────────────

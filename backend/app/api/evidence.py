@@ -199,6 +199,21 @@ async def upload_evidence(
     )
 
 
+@router.get("/walrus/status/{job_id}")
+async def get_tatum_walrus_status(
+    job_id: str,
+    current_user=Depends(get_current_user),
+):
+    """Return the current Tatum Walrus storage job status."""
+    try:
+        return await walrus_service.get_upload_status(job_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve Tatum Walrus upload status: {exc}",
+        )
+
+
 @router.get("/{evidence_id}", response_model=EvidenceResponse)
 async def get_evidence(
     evidence_id: UUID,

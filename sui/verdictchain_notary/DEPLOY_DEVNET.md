@@ -32,5 +32,5 @@ SUI_NOTARY_FUNCTION=seal_evidence
 SUI_CLI_ENABLED=true
 SUI_CLI_PATH=sui
 SUI_GAS_BUDGET=10000000
-TATUM_RPC_URL=https://fullnode.devnet.sui.io:443
+TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
 ```

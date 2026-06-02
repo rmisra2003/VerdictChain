@@ -62,7 +62,7 @@ services:
       - SUI_GAS_BUDGET=10000000
       - TATUM_API_KEY=your-actual-production-tatum-key
       - TATUM_API_URL=https://api.tatum.io
-      - TATUM_RPC_URL=https://fullnode.devnet.sui.io:443
+      - TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
       - TATUM_MCP_URL=https://mcp.tatum.io
       - DEEPSEEK_API_KEY=your-actual-production-deepseek-key
       - DEEPSEEK_BASE_URL=https://api.deepseek.com
