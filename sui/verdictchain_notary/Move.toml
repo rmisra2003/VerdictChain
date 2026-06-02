@@ -1,0 +1,10 @@
+[package]
+name = "verdictchain_notary"
+edition = "2024"
+license = "MIT"
+authors = ["VerdictChain"]
+
+[dependencies]
+
+[addresses]
+verdictchain_notary = "0x0"
