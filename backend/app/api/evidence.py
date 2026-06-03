@@ -24,9 +24,8 @@ router = APIRouter(prefix="/evidence", tags=["Evidence"])
 async def _run_ai_processing(case_id: UUID, evidence_id: UUID, file_content: str):
     """Background task: run AI entity extraction, timeline, graph, trust score updates."""
     # This function runs outside the request context, so errors are logged but
-    # do not crash the response.  In a production system you would use a proper
-    # task queue (Celery / ARQ).  For hackathon demo the background-task approach
-    # is sufficient.
+    # do not crash the response. In production this should move to a durable
+    # task queue such as Celery, ARQ, or a managed worker queue.
     try:
         # Entity extraction
         await deepseek_service.extract_entities(file_content)
@@ -34,7 +33,7 @@ async def _run_ai_processing(case_id: UUID, evidence_id: UUID, file_content: str
         # The trust score will be recalculated by dedicated endpoints;
         # here we just trigger a lightweight pass.
     except Exception:
-        # Swallow — background processing is best-effort during the hackathon.
+        # Swallow; background enrichment must not break evidence ingestion.
         pass
 
 
@@ -212,6 +211,20 @@ async def get_tatum_walrus_status(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Failed to retrieve Tatum Walrus upload status: {exc}",
         )
+
+
+@router.get("/case/{case_id}", response_model=list[EvidenceResponse])
+async def list_case_evidence(
+    case_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """List all evidence metadata for a case owned by the current user."""
+    case = await case_repo.get_by_id(db, case_id)
+    if case is None or case.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    return await evidence_repo.get_by_case(db, case_id)
 
 
 @router.get("/{evidence_id}", response_model=EvidenceResponse)

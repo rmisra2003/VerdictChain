@@ -10,7 +10,7 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import auth, cases, demo, evidence, graph, reports, timeline, verification
+from app.api import auth, cases, evidence, graph, reports, timeline, verification
 from app.core.config import settings
 from app.core.database import init_db
 
@@ -82,7 +82,6 @@ async def health_check() -> JSONResponse:
 # All routers are prefixed with /api to keep namespace distinct from frontend
 app.include_router(auth.router, prefix="/api")
 app.include_router(cases.router, prefix="/api")
-app.include_router(demo.router, prefix="/api")
 app.include_router(evidence.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(timeline.router, prefix="/api")

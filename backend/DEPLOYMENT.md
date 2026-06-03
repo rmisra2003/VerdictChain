@@ -49,7 +49,6 @@ services:
       - SECRET_KEY=generate-a-secure-64-character-hex-key-here
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=1440
-      - ENABLE_DEMO_BOOTSTRAP=true
       - WALRUS_STORAGE_PROVIDER=tatum
       - WALRUS_PUBLISHER_URL=
       - WALRUS_AGGREGATOR_URL=https://aggregator.walrus-mainnet.walrus.space

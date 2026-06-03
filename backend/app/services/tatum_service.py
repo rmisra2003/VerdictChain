@@ -2,15 +2,11 @@
 
 Wraps the Tatum REST / JSON-RPC gateway so the rest of the application
 can submit and query Sui transactions without dealing with raw HTTP.
-When the API key is a placeholder the service returns realistic mock
-data so the hackathon demo works without a live key.
 """
 
 from __future__ import annotations
 
-import hashlib
 import logging
-import time
 from typing import Any
 
 import httpx
@@ -56,10 +52,9 @@ class TatumService:
             response.raise_for_status()
             return response.json()
 
-    @staticmethod
-    def _simulated_tx_hash(seed: str) -> str:
-        """Deterministic fake transaction digest derived from *seed*."""
-        return hashlib.sha256(seed.encode()).hexdigest()
+    def _ensure_configured(self) -> None:
+        if self._is_placeholder:
+            raise RuntimeError("TATUM_API_KEY must be configured for live Tatum RPC calls.")
 
     # ------------------------------------------------------------------
     # Public API
@@ -71,17 +66,7 @@ class TatumService:
         Returns:
             dict containing ``tx_hash``, ``status``, and raw ``data``.
         """
-        if self._is_placeholder:
-            fake_hash = self._simulated_tx_hash(str(tx_data) + str(time.time()))
-            logger.info("Tatum placeholder mode – simulated tx_hash=%s", fake_hash)
-            return {
-                "tx_hash": fake_hash,
-                "status": "simulated",
-                "data": {
-                    "digest": fake_hash,
-                    "effects": {"status": {"status": "success"}},
-                },
-            }
+        self._ensure_configured()
 
         try:
             payload = {
@@ -108,13 +93,7 @@ class TatumService:
 
     async def verify_transaction(self, tx_hash: str) -> dict[str, Any]:
         """Verify that a transaction exists and return its status."""
-        if self._is_placeholder:
-            return {
-                "tx_hash": tx_hash,
-                "verified": True,
-                "status": "simulated",
-                "timestamp": int(time.time() * 1000),
-            }
+        self._ensure_configured()
 
         try:
             payload = {
@@ -138,13 +117,7 @@ class TatumService:
 
     async def get_latest_checkpoint(self) -> dict[str, Any]:
         """Return the latest Sui checkpoint via Tatum's Sui RPC gateway."""
-        if self._is_placeholder:
-            checkpoint = int(time.time())
-            return {
-                "sequence_number": checkpoint,
-                "status": "simulated",
-                "network": settings.SUI_NETWORK,
-            }
+        self._ensure_configured()
 
         try:
             payload = {
@@ -166,13 +139,7 @@ class TatumService:
 
     async def get_wallet_data(self, address: str) -> dict[str, Any]:
         """Retrieve wallet / object information for *address*."""
-        if self._is_placeholder:
-            return {
-                "address": address,
-                "balance": "1000000000",
-                "status": "simulated",
-                "objects": [],
-            }
+        self._ensure_configured()
 
         try:
             payload = {
@@ -194,15 +161,7 @@ class TatumService:
 
     async def get_transaction_data(self, tx_hash: str) -> dict[str, Any]:
         """Return the full transaction block for *tx_hash*."""
-        if self._is_placeholder:
-            return {
-                "tx_hash": tx_hash,
-                "status": "simulated",
-                "sender": settings.SUI_SENDER_ADDRESS,
-                "timestamp": int(time.time() * 1000),
-                "effects": {"status": {"status": "success"}},
-                "events": [],
-            }
+        self._ensure_configured()
 
         try:
             payload = {
@@ -231,18 +190,10 @@ class TatumService:
     async def get_proof_data(self, proof_hash: str) -> dict[str, Any]:
         """Look up on-chain proof metadata by *proof_hash*.
 
-        In a production system this would query a Sui Move object table.
-        For the hackathon demo it returns simulated data when using a
-        placeholder key.
+        In production this should query the deployed Sui Move notary events
+        or dynamic fields associated with the proof hash.
         """
-        if self._is_placeholder:
-            return {
-                "proof_hash": proof_hash,
-                "verified": True,
-                "status": "simulated",
-                "timestamp": int(time.time() * 1000),
-                "tx_hash": self._simulated_tx_hash(proof_hash),
-            }
+        self._ensure_configured()
 
         try:
             # Query a dynamic field / event associated with the proof hash.

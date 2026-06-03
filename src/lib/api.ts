@@ -1,40 +1,58 @@
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
 
-const TOKEN_KEY = "verdictchain_demo_token";
-const CASE_ID_KEY = "verdictchain_demo_case_id";
+const TOKEN_KEY = "verdictchain_access_token";
+const ACTIVE_CASE_ID_KEY = "verdictchain_active_case_id";
 
-export interface DemoSession {
-  access_token: string;
-  token_type: "bearer";
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  wallet_address?: string | null;
+  created_at: string;
+}
+
+export interface AuthSession {
+  token: string;
+  user?: UserProfile;
+}
+
+export interface CaseRecord {
+  id: string;
+  title: string;
+  description: string;
+  status: "active" | "archived" | "closed" | string;
+  trust_score: number;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+  evidence_count: number;
+}
+
+export interface EvidenceRecord {
+  id: string;
   case_id: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
+  filename: string;
+  file_type: string;
+  file_size: number;
+  sha256_hash: string;
+  walrus_blob_id?: string | null;
+  verification_status: string;
+  created_at: string;
+}
+
+export interface ProofRecord {
+  id: string;
+  case_id: string;
+  evidence_id: string;
+  sui_transaction_hash?: string | null;
+  proof_hash: string;
+  timestamp: string;
+  verification_status: string;
 }
 
 export interface EvidenceUploadApiResponse {
-  evidence: {
-    id: string;
-    case_id: string;
-    filename: string;
-    file_type: string;
-    file_size: number;
-    sha256_hash: string;
-    walrus_blob_id?: string | null;
-    verification_status: string;
-    created_at: string;
-  };
-  proof?: {
-    id: string;
-    case_id: string;
-    evidence_id: string;
-    sui_transaction_hash?: string | null;
-    proof_hash: string;
-    timestamp: string;
-    verification_status: string;
-  } | null;
+  evidence: EvidenceRecord;
+  proof?: ProofRecord | null;
   walrus_metadata: {
     provider?: string;
     blob_id?: string;
@@ -43,6 +61,47 @@ export interface EvidenceUploadApiResponse {
     raw?: Record<string, unknown>;
   };
   message: string;
+}
+
+export interface TimelineRecord {
+  id: string;
+  case_id: string;
+  walrus_blob_id?: string | null;
+  timeline_json: {
+    events?: Array<Record<string, unknown>>;
+    [key: string]: unknown;
+  };
+  created_at: string;
+}
+
+export interface ReportRecord {
+  id: string;
+  case_id: string;
+  walrus_blob_id?: string | null;
+  report_json: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface GraphRecord {
+  id: string;
+  case_id: string;
+  walrus_blob_id?: string | null;
+  graph_json: {
+    nodes?: Array<{
+      id: string;
+      label?: string;
+      type?: string;
+      metadata?: Record<string, unknown>;
+    }>;
+    edges?: Array<{
+      source: string;
+      target: string;
+      label?: string;
+      weight?: number;
+    }>;
+    [key: string]: unknown;
+  };
+  created_at: string;
 }
 
 export interface VerifyApiResponse {
@@ -57,14 +116,7 @@ export interface VerifyApiResponse {
     case_id?: string | null;
     blockchain_details?: Record<string, unknown>;
     walrus_details?: Record<string, unknown>;
-    evidence_metadata?: {
-      id: string;
-      filename: string;
-      file_type: string;
-      file_size: number;
-      verification_status: string;
-      created_at: string;
-    } | null;
+    evidence_metadata?: EvidenceRecord | null;
     proof_metadata?: {
       id: string;
       proof_hash: string;
@@ -85,71 +137,177 @@ export interface TatumWalrusJobStatus {
   [key: string]: unknown;
 }
 
+export interface SuiWalletChallenge {
+  wallet_address: string;
+  nonce: string;
+  message: string;
+  expires_at: string;
+}
+
 export function isApiConfigured(): boolean {
   return API_BASE_URL.length > 0;
 }
 
-function getStoredSession(): { token: string; caseId: string } | null {
+export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  const token = window.localStorage.getItem(TOKEN_KEY);
-  const caseId = window.localStorage.getItem(CASE_ID_KEY);
-  if (!token || !caseId) return null;
-  return { token, caseId };
+  return window.localStorage.getItem(TOKEN_KEY);
 }
 
-function storeSession(session: DemoSession) {
-  window.localStorage.setItem(TOKEN_KEY, session.access_token);
-  window.localStorage.setItem(CASE_ID_KEY, session.case_id);
+export function storeAuthToken(token: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(TOKEN_KEY, token);
 }
 
-async function bootstrapDemoSession(): Promise<{ token: string; caseId: string } | null> {
-  if (!isApiConfigured() || process.env.NEXT_PUBLIC_ENABLE_DEMO_BOOTSTRAP !== "true") {
-    return null;
+export function clearAuthSession() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(TOKEN_KEY);
+  window.localStorage.removeItem(ACTIVE_CASE_ID_KEY);
+}
+
+export function getActiveCaseId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACTIVE_CASE_ID_KEY);
+}
+
+export function setActiveCaseId(caseId: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(ACTIVE_CASE_ID_KEY, caseId);
+}
+
+function requireApiBaseUrl() {
+  if (!isApiConfigured()) {
+    throw new Error("NEXT_PUBLIC_API_BASE_URL is not configured.");
+  }
+}
+
+async function apiRequest<T>(
+  path: string,
+  init: RequestInit = {},
+  options: { auth?: boolean } = {},
+): Promise<T> {
+  requireApiBaseUrl();
+
+  const headers = new Headers(init.headers);
+  if (options.auth) {
+    const token = getStoredToken();
+    if (!token) {
+      throw new Error("Authentication required. Sign in before using this workspace.");
+    }
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/demo/bootstrap`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
   });
 
+  if (response.status === 401) {
+    clearAuthSession();
+  }
+
   if (!response.ok) {
-    throw new Error(`Demo bootstrap failed (${response.status})`);
+    const detail = await response.text();
+    throw new Error(`API request failed (${response.status}): ${detail}`);
   }
 
-  const session = (await response.json()) as DemoSession;
-  storeSession(session);
-  return { token: session.access_token, caseId: session.case_id };
-}
-
-export async function ensureApiSession(): Promise<{ token: string; caseId: string }> {
-  const stored = getStoredSession();
-  if (stored) return stored;
-
-  const bootstrapped = await bootstrapDemoSession();
-  if (bootstrapped) return bootstrapped;
-
-  const envToken = process.env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN;
-  const envCaseId = process.env.NEXT_PUBLIC_DEMO_CASE_ID;
-  if (envToken && envCaseId) {
-    return { token: envToken, caseId: envCaseId };
+  if (response.status === 204) {
+    return undefined as T;
   }
 
-  throw new Error("Backend API is configured, but no demo session or case ID is available.");
+  return (await response.json()) as T;
 }
 
-export async function uploadEvidenceToApi(file: File): Promise<EvidenceUploadApiResponse> {
-  const session = await ensureApiSession();
+export async function getCurrentUser(): Promise<UserProfile> {
+  return apiRequest<UserProfile>("/api/auth/me", {}, { auth: true });
+}
+
+export async function requestSuiWalletChallenge(walletAddress: string): Promise<SuiWalletChallenge> {
+  return apiRequest<SuiWalletChallenge>("/api/auth/wallet/challenge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ wallet_address: walletAddress }),
+  });
+}
+
+export async function loginWithSuiWalletSignature(input: {
+  wallet_address: string;
+  nonce: string;
+  message_bytes: string;
+  signature: string;
+}): Promise<AuthSession> {
+  const tokenResponse = await apiRequest<{ access_token: string; token_type: "bearer" }>(
+    "/api/auth/wallet/login",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  storeAuthToken(tokenResponse.access_token);
+  const user = await getCurrentUser();
+  return { token: tokenResponse.access_token, user };
+}
+
+export async function listCases(): Promise<CaseRecord[]> {
+  const cases = await apiRequest<CaseRecord[]>("/api/cases", {}, { auth: true });
+  const activeCaseId = getActiveCaseId();
+  if ((!activeCaseId || !cases.some((item) => item.id === activeCaseId)) && cases[0]) {
+    setActiveCaseId(cases[0].id);
+  }
+  return cases;
+}
+
+export async function createCase(input: { title: string; description: string }): Promise<CaseRecord> {
+  const created = await apiRequest<CaseRecord>(
+    "/api/cases",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    { auth: true },
+  );
+  setActiveCaseId(created.id);
+  return created;
+}
+
+export async function getCase(caseId: string): Promise<CaseRecord> {
+  return apiRequest<CaseRecord>(`/api/cases/${encodeURIComponent(caseId)}`, {}, { auth: true });
+}
+
+export async function listEvidenceByCase(caseId: string): Promise<EvidenceRecord[]> {
+  return apiRequest<EvidenceRecord[]>(
+    `/api/evidence/case/${encodeURIComponent(caseId)}`,
+    {},
+    { auth: true },
+  );
+}
+
+export async function uploadEvidenceToApi(
+  file: File,
+  caseId: string,
+): Promise<EvidenceUploadApiResponse> {
+  const token = getStoredToken();
+  if (!token) {
+    throw new Error("Authentication required. Sign in before uploading evidence.");
+  }
+
+  requireApiBaseUrl();
   const formData = new FormData();
-  formData.append("case_id", session.caseId);
+  formData.append("case_id", caseId);
   formData.append("file", file);
 
   const response = await fetch(`${API_BASE_URL}/api/evidence/upload`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${session.token}`,
+      Authorization: `Bearer ${token}`,
     },
     body: formData,
   });
+
+  if (response.status === 401) {
+    clearAuthSession();
+  }
 
   if (!response.ok) {
     const detail = await response.text();
@@ -160,33 +318,81 @@ export async function uploadEvidenceToApi(file: File): Promise<EvidenceUploadApi
 }
 
 export async function getTatumWalrusJobStatus(jobId: string): Promise<TatumWalrusJobStatus> {
-  const session = await ensureApiSession();
-  const response = await fetch(
-    `${API_BASE_URL}/api/evidence/walrus/status/${encodeURIComponent(jobId)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
-    },
+  return apiRequest<TatumWalrusJobStatus>(
+    `/api/evidence/walrus/status/${encodeURIComponent(jobId)}`,
+    {},
+    { auth: true },
   );
+}
 
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Tatum Walrus status lookup failed (${response.status}): ${detail}`);
+export async function getCaseTimeline(caseId: string): Promise<TimelineRecord | null> {
+  try {
+    return await apiRequest<TimelineRecord>(
+      `/api/timeline/case/${encodeURIComponent(caseId)}`,
+      {},
+      { auth: true },
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) return null;
+    throw error;
   }
+}
 
-  return (await response.json()) as TatumWalrusJobStatus;
+export async function generateCaseTimeline(caseId: string): Promise<TimelineRecord> {
+  return apiRequest<TimelineRecord>(
+    `/api/timeline/generate?case_id=${encodeURIComponent(caseId)}`,
+    { method: "POST" },
+    { auth: true },
+  );
+}
+
+export async function getCaseReport(caseId: string): Promise<ReportRecord | null> {
+  try {
+    return await apiRequest<ReportRecord>(
+      `/api/reports/case/${encodeURIComponent(caseId)}`,
+      {},
+      { auth: true },
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) return null;
+    throw error;
+  }
+}
+
+export async function generateCaseReport(caseId: string): Promise<ReportRecord> {
+  return apiRequest<ReportRecord>(
+    `/api/reports/generate?case_id=${encodeURIComponent(caseId)}`,
+    { method: "POST" },
+    { auth: true },
+  );
+}
+
+export async function getCaseGraph(caseId: string): Promise<GraphRecord | null> {
+  try {
+    return await apiRequest<GraphRecord>(
+      `/api/graph/${encodeURIComponent(caseId)}`,
+      {},
+      { auth: true },
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) return null;
+    throw error;
+  }
+}
+
+export async function generateCaseGraph(caseId: string): Promise<GraphRecord> {
+  return apiRequest<GraphRecord>(
+    `/api/graph/generate?case_id=${encodeURIComponent(caseId)}`,
+    { method: "POST" },
+    { auth: true },
+  );
 }
 
 export async function verifyEvidenceHash(
   fileHash: string,
   suiTxHash?: string,
 ): Promise<VerifyApiResponse> {
-  if (!isApiConfigured()) {
-    throw new Error("Backend API is not configured.");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/api/verification/verify`, {
+  return apiRequest<VerifyApiResponse>("/api/verification/verify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -194,13 +400,6 @@ export async function verifyEvidenceHash(
       sui_tx_hash: suiTxHash || null,
     }),
   });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Verification failed (${response.status}): ${detail}`);
-  }
-
-  return (await response.json()) as VerifyApiResponse;
 }
 
 export async function calculateFileSha256(file: File): Promise<string> {

@@ -259,16 +259,14 @@ class TrustScoreService:
     def _contradiction_score(evidence_rows: list[Any]) -> float:
         """Heuristic contradiction score (0–100).
 
-        Higher is *better* (fewer contradictions).  For the hackathon
-        demo this returns a simple heuristic based on evidence volume.
-        Real implementation would cross-reference AI-extracted entities.
+        Higher is *better* (fewer contradictions). This lightweight score
+        can later be replaced with AI cross-reference results.
         """
         if not evidence_rows:
             return 50.0
 
-        # More evidence pieces → slightly lower contradiction score
-        # (more potential for conflict).  This is a placeholder heuristic
-        # until the AI contradiction detector is wired in.
+        # More evidence pieces implies more possible conflict until a richer
+        # contradiction detector is persisted.
         count = len(evidence_rows)
         if count <= 2:
             return 90.0

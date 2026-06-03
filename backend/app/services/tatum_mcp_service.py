@@ -1,15 +1,12 @@
 """Tatum MCP (Model Context Protocol) client for AI-driven blockchain queries.
 
 The MCP endpoint exposes a higher-level, AI-friendly API on top of raw
-blockchain data.  When the Tatum API key is a placeholder the client
-returns realistic mock data so the hackathon demo functions end-to-end.
+blockchain data.
 """
 
 from __future__ import annotations
 
-import hashlib
 import logging
-import time
 from typing import Any
 
 import httpx
@@ -37,6 +34,10 @@ class TatumMCPService:
     def _is_placeholder(self) -> bool:
         return self._api_key in _PLACEHOLDER_KEYS
 
+    def _ensure_configured(self) -> None:
+        if self._is_placeholder:
+            raise RuntimeError("TATUM_API_KEY must be configured for Tatum MCP calls.")
+
     def _headers(self) -> dict[str, str]:
         return {
             "Content-Type": "application/json",
@@ -59,10 +60,6 @@ class TatumMCPService:
             response.raise_for_status()
             return response.json()
 
-    @staticmethod
-    def _sim_hash(seed: str) -> str:
-        return hashlib.sha256(seed.encode()).hexdigest()
-
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -74,16 +71,7 @@ class TatumMCPService:
             dict with ``tx_hash``, ``verified``, ``status``, ``block_height``,
             ``timestamp``, and ``confirmations``.
         """
-        if self._is_placeholder:
-            return {
-                "tx_hash": tx_hash,
-                "verified": True,
-                "status": "simulated",
-                "block_height": 1_000_000 + abs(hash(tx_hash)) % 100_000,
-                "timestamp": int(time.time() * 1000),
-                "confirmations": 12,
-                "network": f"sui-{settings.SUI_NETWORK}",
-            }
+        self._ensure_configured()
 
         try:
             result = await self._post(
@@ -113,18 +101,7 @@ class TatumMCPService:
         Returns:
             A list of transaction summary dicts.
         """
-        if self._is_placeholder:
-            now_ms = int(time.time() * 1000)
-            return [
-                {
-                    "tx_hash": self._sim_hash(f"{address}-{i}"),
-                    "timestamp": now_ms - i * 60_000,
-                    "status": "success",
-                    "type": "proof_submission",
-                    "network": f"sui-{settings.SUI_NETWORK}",
-                }
-                for i in range(min(limit, 5))
-            ]
+        self._ensure_configured()
 
         try:
             result = await self._get(
@@ -142,15 +119,7 @@ class TatumMCPService:
         Returns:
             dict with ``address``, ``balance``, ``object_count``, ``status``.
         """
-        if self._is_placeholder:
-            return {
-                "address": address,
-                "balance": "1000000000",
-                "object_count": 3,
-                "status": "simulated",
-                "network": f"sui-{settings.SUI_NETWORK}",
-                "created_at": int(time.time() * 1000) - 86_400_000,
-            }
+        self._ensure_configured()
 
         try:
             result = await self._get(
@@ -179,22 +148,7 @@ class TatumMCPService:
             dict with ``total``, ``valid``, ``invalid``, and per-hash
             ``results`` list.
         """
-        if self._is_placeholder:
-            results = [
-                {
-                    "proof_hash": ph,
-                    "valid": True,
-                    "tx_hash": self._sim_hash(ph),
-                    "status": "simulated",
-                }
-                for ph in proof_hashes
-            ]
-            return {
-                "total": len(proof_hashes),
-                "valid": len(proof_hashes),
-                "invalid": 0,
-                "results": results,
-            }
+        self._ensure_configured()
 
         try:
             result = await self._post(

@@ -59,6 +59,31 @@ class User(Base):
 
 
 # ---------------------------------------------------------------------------
+# 1b. Wallet Challenge
+# ---------------------------------------------------------------------------
+class WalletChallenge(Base):
+    """One-time Sui wallet login challenge."""
+
+    __tablename__ = "wallet_challenges"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4
+    )
+    wallet_address: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    nonce: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        Index("ix_wallet_challenges_wallet_nonce", "wallet_address", "nonce"),
+    )
+
+
+# ---------------------------------------------------------------------------
 # 2. CaseVault
 # ---------------------------------------------------------------------------
 class CaseVault(Base):

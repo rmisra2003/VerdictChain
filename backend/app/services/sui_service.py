@@ -2,14 +2,12 @@
 
 Provides a high-level interface for creating and verifying on-chain
 evidence proofs.  Under the hood every RPC call is routed through the
-:pymod:`app.services.tatum_service` so we get automatic placeholder-key
-simulation for the hackathon demo.
+:pymod:`app.services.tatum_service` for read/verification paths.
 """
 
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 import logging
 import time
@@ -43,9 +41,9 @@ class SuiService:
     def _is_placeholder(self) -> bool:
         return settings.TATUM_API_KEY in _PLACEHOLDER_KEYS
 
-    @staticmethod
-    def _deterministic_hash(seed: str) -> str:
-        return hashlib.sha256(seed.encode()).hexdigest()
+    def _ensure_configured(self) -> None:
+        if self._is_placeholder:
+            raise RuntimeError("TATUM_API_KEY must be configured before Sui proof operations.")
 
     async def _run_sui_cli(self, *args: str) -> dict[str, Any]:
         """Run the local Sui CLI and parse JSON output."""
@@ -148,30 +146,11 @@ class SuiService:
     ) -> dict[str, Any]:
         """Submit an evidence proof to the Sui blockchain.
 
-        When the Tatum API key is a placeholder the method returns a
-        realistic simulated transaction so the rest of the application
-        can continue working without a live chain.
-
         Returns:
             dict with ``tx_hash``, ``status``, ``proof_hash``, ``network``,
             ``timestamp``, and optional ``data``.
         """
-        if self._is_placeholder:
-            seed = f"{proof_hash}:{evidence_id}:{case_id}"
-            fake_tx = self._deterministic_hash(seed)
-            logger.info(
-                "Sui placeholder mode – simulated proof tx_hash=%s", fake_tx
-            )
-            return {
-                "tx_hash": fake_tx,
-                "status": "simulated",
-                "proof_hash": proof_hash,
-                "evidence_id": evidence_id,
-                "case_id": case_id,
-                "network": self._network,
-                "sender": self._sender,
-                "timestamp": int(time.time() * 1000),
-            }
+        self._ensure_configured()
 
         if not self._notary_package_id:
             latest_checkpoint = await tatum_service.get_latest_checkpoint()
@@ -223,14 +202,7 @@ class SuiService:
             dict with ``tx_hash``, ``verified`` (bool), ``status``, and
             optional ``data``.
         """
-        if self._is_placeholder:
-            return {
-                "tx_hash": tx_hash,
-                "verified": True,
-                "status": "simulated",
-                "network": self._network,
-                "timestamp": int(time.time() * 1000),
-            }
+        self._ensure_configured()
 
         result = await tatum_service.verify_transaction(tx_hash)
         return {
@@ -243,30 +215,13 @@ class SuiService:
 
     async def get_transaction(self, tx_hash: str) -> dict[str, Any]:
         """Return the full transaction details for *tx_hash*."""
-        if self._is_placeholder:
-            return {
-                "tx_hash": tx_hash,
-                "status": "simulated",
-                "network": self._network,
-                "sender": self._sender,
-                "timestamp": int(time.time() * 1000),
-                "effects": {"status": {"status": "success"}},
-                "events": [],
-            }
+        self._ensure_configured()
 
         return await tatum_service.get_transaction_data(tx_hash)
 
     async def get_proof(self, proof_hash: str) -> dict[str, Any]:
         """Look up a proof record by its content hash."""
-        if self._is_placeholder:
-            return {
-                "proof_hash": proof_hash,
-                "verified": True,
-                "status": "simulated",
-                "network": self._network,
-                "tx_hash": self._deterministic_hash(proof_hash),
-                "timestamp": int(time.time() * 1000),
-            }
+        self._ensure_configured()
 
         return await tatum_service.get_proof_data(proof_hash)
 

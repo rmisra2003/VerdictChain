@@ -14,10 +14,13 @@ import {
   Bell, 
   Clock,
   Menu,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
+import { clearAuthSession, getCurrentUser, UserProfile } from "@/lib/api";
 
 export default function DashboardLayout({
   children,
@@ -26,6 +29,53 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = React.useState<UserProfile | null>(null);
+  const [clock, setClock] = React.useState("");
+
+  React.useEffect(() => {
+    let mounted = true;
+    getCurrentUser()
+      .then((profile) => {
+        if (mounted) setUser(profile);
+      })
+      .catch(() => {
+        if (mounted) setUser(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const updateClock = () => {
+      setClock(new Date().toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }));
+    };
+    updateClock();
+    const interval = window.setInterval(updateClock, 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const initials = user?.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "VC";
+
+  const walletLabel = user?.wallet_address
+    ? `${user.wallet_address.slice(0, 10)}...${user.wallet_address.slice(-6)}`
+    : "No wallet bound";
+
+  const signOut = () => {
+    clearAuthSession();
+    window.location.href = "/auth";
+  };
 
   const navLinks = [
     {
@@ -102,14 +152,14 @@ export default function DashboardLayout({
           <div className="flex items-center gap-2.5 bg-secondary/80 p-2.5 rounded-lg border border-border/80 text-[10px] font-mono">
             <Wallet className="w-3.5 h-3.5 text-accent-blue flex-shrink-0" />
             <div className="space-y-0.5 truncate">
-              <div className="text-zinc-400 font-bold">notary.sui</div>
-              <div className="text-zinc-500 truncate text-[9px]">0x8fa3f92bcde28abcf38d...</div>
+              <div className="text-zinc-400 font-bold">{user ? "Sui identity" : "Signed out"}</div>
+              <div className="text-zinc-500 truncate text-[9px]">{walletLabel}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-[9px] text-zinc-500 px-1">
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-green" />
-              Sui Mainnet
+              Sui Devnet
             </span>
             <span>Tatum Verified</span>
           </div>
@@ -142,7 +192,7 @@ export default function DashboardLayout({
             {/* Live Clock */}
             <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono text-zinc-500">
               <Clock className="w-3.5 h-3.5" />
-              <span>June 2, 2026 11:17 UTC</span>
+              <span>{clock}</span>
             </div>
 
             {/* Notifications */}
@@ -152,12 +202,25 @@ export default function DashboardLayout({
             </button>
 
             {/* User Profile */}
-            <div className="flex items-center gap-2 border-l border-border/40 pl-4">
-              <div className="w-7 h-7 rounded-full bg-accent-blue/15 border border-accent-blue/40 flex items-center justify-center font-bold text-xs text-accent-blue uppercase">
-                EW
+            {user ? (
+              <div className="flex items-center gap-2 border-l border-border/40 pl-4">
+                <div className="w-7 h-7 rounded-full bg-accent-blue/15 border border-accent-blue/40 flex items-center justify-center font-bold text-xs text-accent-blue uppercase">
+                  {initials}
+                </div>
+                <span className="hidden sm:inline text-xs font-semibold text-zinc-400">{user.name}</span>
+                <button
+                  onClick={signOut}
+                  className="p-1.5 rounded-lg bg-secondary/80 border border-border/80 text-zinc-400 hover:text-white transition-all"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
-              <span className="hidden sm:inline text-xs font-semibold text-zinc-400">Dr. Wright</span>
-            </div>
+            ) : (
+              <Link href="/auth">
+                <Button variant="secondary" size="sm">Sign in</Button>
+              </Link>
+            )}
           </div>
         </header>
 
@@ -213,7 +276,7 @@ export default function DashboardLayout({
                 <div className="p-4 border-t border-border/40 bg-black/40">
                   <div className="flex items-center gap-2 bg-secondary p-2.5 rounded-lg border border-border text-[9px] font-mono">
                     <Wallet className="w-3.5 h-3.5 text-accent-blue" />
-                    <div className="truncate text-zinc-400">0x8fa3f92b...</div>
+                    <div className="truncate text-zinc-400">{walletLabel}</div>
                   </div>
                 </div>
               </motion.aside>

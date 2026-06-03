@@ -20,7 +20,6 @@ Required environment:
 ```ini
 DATABASE_URL=postgresql+asyncpg://...
 SECRET_KEY=...
-ENABLE_DEMO_BOOTSTRAP=true
 WALRUS_STORAGE_PROVIDER=tatum
 WALRUS_AGGREGATOR_URL=https://aggregator.walrus-mainnet.walrus.space
 SUI_NETWORK=devnet
@@ -53,35 +52,36 @@ Required environment:
 
 ```ini
 NEXT_PUBLIC_API_BASE_URL=https://your-backend-domain.com
-NEXT_PUBLIC_ENABLE_DEMO_BOOTSTRAP=true
+NEXT_PUBLIC_SUI_NETWORK=devnet
 ```
 
 ## Demo Flow
 
-1. Open `/dashboard/upload`.
-2. Upload a supported file.
-3. Confirm the receipt shows:
+1. Open `/auth`, connect a Sui wallet, and sign the VerdictChain challenge.
+2. Open `/dashboard/cases` and create a case vault.
+3. Open `/dashboard/upload`.
+4. Upload a supported file.
+5. Confirm the receipt shows:
    - SHA-256 hash
    - Walrus blob or pending blob id
    - Tatum Walrus job id
    - Refreshable Tatum Walrus job status
    - devnet Sui transaction status
-4. Open `/verify`.
-5. Upload the same file and verify the SHA-256 fingerprint through the backend.
-6. Open `/dashboard/graph` and `/dashboard/cases/VC-2026-11` for the investigation story.
+6. Open `/verify`.
+7. Upload the same file and verify the SHA-256 fingerprint through the backend.
+8. Open the created case workspace and generate the DeepSeek timeline/report/graph artifacts.
 
 ## Video Script
 
 1. Problem: digital evidence is easy to tamper with and hard to prove in court.
-2. Show VerdictChain dashboard and case vault.
+2. Register/login and create a real case vault.
 3. Upload an evidence file.
 4. Show the backend-backed Walrus/Tatum receipt.
 5. Verify the same file publicly.
-6. Show AI report/timeline/graph as the forensic workspace layer powered by DeepSeek.
+6. Generate AI report/timeline/graph as the forensic workspace layer powered by DeepSeek.
 7. Close with the stack: Next.js, FastAPI, PostgreSQL, Sui devnet notary, Tatum Walrus storage, DeepSeek.
 
 ## Known Limits
 
 - Current local sealing uses the deployed Sui devnet notary package through the local Sui CLI signer.
-- `ENABLE_DEMO_BOOTSTRAP=true` is for hackathon demo convenience. Disable it after submission.
-- Alembic is installed but migrations are not scaffolded yet; the backend currently creates tables at startup for demo velocity.
+- Alembic is installed but migrations are not scaffolded yet; the backend currently creates tables at startup for local velocity.

@@ -58,7 +58,6 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = False
     CORS_ORIGINS: str = '["http://localhost:3000","http://localhost:8000"]'
-    ENABLE_DEMO_BOOTSTRAP: bool = False
 
     # ── File Upload ─────────────────────────────────────────────────────
     MAX_FILE_SIZE_MB: int = 50

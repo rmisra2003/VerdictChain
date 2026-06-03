@@ -106,14 +106,13 @@ HOST=0.0.0.0
 PORT=8000
 DEBUG=false
 CORS_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
-ENABLE_DEMO_BOOTSTRAP=false
 
 # Security Rules
 MAX_FILE_SIZE_MB=50
 ALLOWED_MIME_TYPES=application/pdf,image/png,image/jpeg,video/mp4,audio/wav,audio/mpeg,text/plain,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 ```
 
-> 💡 **Hackathon Simulation Mode**: If `TATUM_API_KEY` or `DEEPSEEK_API_KEY` are left as placeholders, the services automatically fall back to high-fidelity, deterministic simulated responses, enabling zero-config demos.
+> Production guardrail: `TATUM_API_KEY` and `DEEPSEEK_API_KEY` are required for live storage/RPC/AI paths. Placeholder keys fail closed.
 
 ### 4. Running the Server
 

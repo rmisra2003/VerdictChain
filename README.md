@@ -43,7 +43,7 @@ The backend upload flow was tested end-to-end: file upload, Tatum/Walrus storage
 - Public verification API that checks local file hashes against registered evidence, verifies Sui transaction status, and checks Walrus blob reachability.
 - Tatum integration surfaced in the product: upload receipts show Tatum Walrus job IDs, blob IDs, certification state, and a live Tatum job-status refresh.
 - DeepSeek-powered extraction pipeline for entities, timelines, reports, graph snapshots, and trust score inputs.
-- Demo bootstrap endpoint for hackathon presentations without exposing a long-lived frontend JWT.
+- Sui wallet-only sessions with backend challenge/login endpoints for standard Sui keypair personal-message signatures.
 - Docker and runtime files for backend deployment.
 
 ## Architecture
@@ -119,7 +119,6 @@ Frontend:
 
 ```ini
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-NEXT_PUBLIC_ENABLE_DEMO_BOOTSTRAP=true
 ```
 
 Backend:
@@ -127,7 +126,6 @@ Backend:
 ```ini
 DATABASE_URL=postgresql+asyncpg://...
 SECRET_KEY=replace-with-a-strong-random-secret
-ENABLE_DEMO_BOOTSTRAP=true
 
 WALRUS_STORAGE_PROVIDER=tatum
 WALRUS_AGGREGATOR_URL=https://aggregator.walrus-mainnet.walrus.space
@@ -195,10 +193,11 @@ sui move build --path sui/verdictchain_notary --build-env testnet --warnings-are
 
 ## Production Notes
 
-- `ENABLE_DEMO_BOOTSTRAP=true` is for hackathon demos. Disable it and use real auth for production.
+- The frontend now requires a Sui wallet challenge login through `/auth`; create a case vault before uploading evidence.
+- Wallet sessions are implemented as backend challenge/login endpoints for Ed25519, Secp256k1, and Secp256r1 personal-message signatures.
 - The current devnet sealing path uses the local Sui CLI signer. For hosted production, replace this with a hardened signer service, key management system, or sponsored transaction worker.
 - Tatum/Walrus certification can be asynchronous; upload responses include the Tatum job and blob metadata.
-- Backend table creation is automatic for demo speed. Use Alembic migrations before a serious production launch.
+- Backend table creation is automatic for local velocity. Use Alembic migrations before a serious production launch.
 - Rotate any API keys that were ever pasted into a chat, screen recording, or shared environment.
 
 ## License

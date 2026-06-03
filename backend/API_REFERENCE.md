@@ -6,39 +6,37 @@ All HTTP endpoints are prefixed with `/api` and return standard JSON formats.
 
 ## 🔒 Authentication API
 
-### `POST /api/auth/register`
-Create a new investigator account.
+### `POST /api/auth/wallet/challenge`
+Create a one-time Sui wallet login challenge.
 
-* **Request Body** (`UserCreate`):
+* **Request Body** (`WalletChallengeRequest`):
   ```json
   {
-    "email": "investigator@agency.gov",
-    "name": "Special Agent Miller",
-    "password": "SecurePassword123!",
-    "wallet_address": "0x4b78c9...1f2"
+    "wallet_address": "0x1111111111111111111111111111111111111111111111111111111111111111"
   }
   ```
-* **Response** (`UserResponse` - `201 Created`):
+* **Response** (`WalletChallengeResponse` - `200 OK`):
   ```json
   {
-    "id": "a3b90f42-472d-4560-bfca-45928d9c223c",
-    "email": "investigator@agency.gov",
-    "name": "Special Agent Miller",
-    "wallet_address": "0x4b78c9...1f2",
-    "created_at": "2026-06-02T11:20:00Z"
+    "wallet_address": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "nonce": "hC_0Yefh8UfQzvLPxHdcZCl4Gm7nb5JJ7prY0hS1rLw",
+    "message": "VerdictChain wallet login\nWallet: 0x1111...\nNonce: hC_0...\nExpires: 2026-06-03T12:10:00+00:00",
+    "expires_at": "2026-06-03T12:10:00Z"
   }
   ```
 
 ---
 
-### `POST /api/auth/login`
-Retrieve a JWT access token using email credentials.
+### `POST /api/auth/wallet/login`
+Verify the signed Sui personal message and retrieve a JWT access token.
 
-* **Request Body** (`UserLogin`):
+* **Request Body** (`WalletLoginRequest`):
   ```json
   {
-    "email": "investigator@agency.gov",
-    "password": "SecurePassword123!"
+    "wallet_address": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "nonce": "hC_0Yefh8UfQzvLPxHdcZCl4Gm7nb5JJ7prY0hS1rLw",
+    "message_bytes": "VmVyZGljdENoYWluIHdhbGxldCBsb2dpbgo=",
+    "signature": "base64-sui-signature-payload"
   }
   ```
 * **Response** (`TokenResponse` - `200 OK`):
@@ -58,9 +56,9 @@ Retrieve profile info of the currently logged-in user. Requires `Authorization: 
   ```json
   {
     "id": "a3b90f42-472d-4560-bfca-45928d9c223c",
-    "email": "investigator@agency.gov",
-    "name": "Special Agent Miller",
-    "wallet_address": "0x4b78c9...1f2",
+    "email": "1111111111111111@wallet.verdictchain.local",
+    "name": "Sui Wallet 0x1111...1111",
+    "wallet_address": "0x1111111111111111111111111111111111111111111111111111111111111111",
     "created_at": "2026-06-02T11:20:00Z"
   }
   ```

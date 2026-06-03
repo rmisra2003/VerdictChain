@@ -22,8 +22,6 @@ import { Badge } from "@/components/ui/Badge";
 
 export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(0);
-  const [simulatedHash, setSimulatedHash] = useState("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b...");
-  const [simulating, setSimulating] = useState(false);
 
   // Auto-rotate the blockchain verification flow steps
   useEffect(() => {
@@ -33,41 +31,22 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const triggerHashSimulation = () => {
-    setSimulating(true);
-    let counter = 0;
-    const interval = setInterval(() => {
-      const chars = "0123456789abcdef";
-      let hex = "0x";
-      for (let i = 0; i < 40; i++) {
-        hex += chars[Math.floor(Math.random() * 16)];
-      }
-      setSimulatedHash(hex);
-      counter++;
-      if (counter > 15) {
-        clearInterval(interval);
-        setSimulatedHash("0x3898ffa83211516e8b5cf6ea1c10d3220f18836ff5b6cae125c10d322efac444");
-        setSimulating(false);
-      }
-    }, 100);
-  };
-
   const steps = [
     {
-      title: "1. Client-Side Cryptographic Seal",
-      desc: "Every digital artifact (video, document, log) is processed locally. A unique SHA-256 fingerprint is generated instantly without uploading the raw file to maintain zero-trust integrity.",
+      title: "1. Evidence Hashing",
+      desc: "Every uploaded artifact is validated by MIME type and size, then SHA-256 hashed before storage and proof creation.",
       icon: <Lock className="w-5 h-5 text-accent-blue" />,
       color: "border-accent-blue"
     },
     {
       title: "2. Sui Consensus Anchoring",
-      desc: "The document fingerprint is committed to the Sui Blockchain via our VerdictChain Notary Smart Contract. The timestamp, transaction hash, and blocks are immutably sealed.",
+      desc: "The evidence fingerprint is committed to the deployed VerdictChain Sui notary package. The resulting transaction digest is stored with the evidence record.",
       icon: <Network className="w-5 h-5 text-accent-purple" />,
       color: "border-accent-purple"
     },
     {
-      title: "3. Walrus Storage Proof",
-      desc: "Evidence metadata and forensic logs are dispersed across Walrus storage nodes. An immutable blob ID is generated, allowing global, trustless proof of custody.",
+      title: "3. Tatum Walrus Storage",
+      desc: "Evidence bytes are uploaded through Tatum's Walrus Data API, returning a job ID and blob metadata that can be refreshed from the product UI.",
       icon: <Database className="w-5 h-5 text-accent-green" />,
       color: "border-accent-green"
     }
@@ -181,16 +160,16 @@ export default function LandingPage() {
               className="mt-12 pt-8 border-t border-border/40 grid grid-cols-3 gap-6 sm:gap-12"
             >
               <div>
-                <div className="text-2xl font-bold text-white tracking-tight">100%</div>
-                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Zero-Trust Integrity</div>
+                <div className="text-2xl font-bold text-white tracking-tight">Live</div>
+                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Backend Sessions</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-white tracking-tight">&lt; 2s</div>
-                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Sui Consensus Seal</div>
+                <div className="text-2xl font-bold text-white tracking-tight">Tatum</div>
+                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Walrus Uploads</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-white tracking-tight">Zero</div>
-                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Server File Access</div>
+                <div className="text-2xl font-bold text-white tracking-tight">Sui</div>
+                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Devnet Notary</div>
               </div>
             </motion.div>
           </div>
@@ -217,16 +196,16 @@ export default function LandingPage() {
                 <div className="flex items-center justify-between border-b border-border/40 pb-2 mb-2">
                   <div className="flex items-center gap-1.5 text-white font-semibold">
                     <FileText className="w-3.5 h-3.5 text-accent-blue" />
-                    Ledger_Q1_Audit.xlsx
+                    Evidence Artifact
                   </div>
                   <Badge variant="verified" className="text-[9px] py-0 px-1.5 font-bold">VERIFIED</Badge>
                 </div>
                 <div className="text-[10px] font-mono text-zinc-500 truncate mb-1.5">
-                  SHA-256: b12a83e...a24f
+                  SHA-256: registered fingerprint
                 </div>
                 <div className="flex items-center justify-between text-zinc-400 mt-2 pt-1.5 border-t border-border/20">
-                  <span>Walrus Storage Proof</span>
-                  <span className="font-semibold text-white">walrus://blob/12f9...</span>
+                  <span>Walrus Storage</span>
+                  <span className="font-semibold text-white">Tatum job</span>
                 </div>
               </Card>
             </motion.div>
@@ -243,15 +222,15 @@ export default function LandingPage() {
                 <div className="flex items-center justify-between border-b border-border/40 pb-2 mb-2">
                   <div className="flex items-center gap-1.5 text-white font-semibold">
                     <Video className="w-3.5 h-3.5 text-accent-purple" />
-                    CCTV_DevSector_4.mp4
+                    Verification Query
                   </div>
                   <Badge variant="tampered" className="text-[9px] py-0 px-1.5 font-bold">TAMPERED</Badge>
                 </div>
                 <div className="text-[10px] font-mono text-zinc-500 truncate mb-1.5">
-                  Hash: 7f83b165...ab11
+                  Hash: no registered match
                 </div>
                 <div className="text-accent-red/90 text-[10px] bg-accent-red/10 border border-accent-red/20 rounded p-1 font-medium mt-1 leading-snug">
-                  Error: original blockchain seal has mismatch at block #14,892,102.
+                  Error: backend found no accepted proof path.
                 </div>
               </Card>
             </motion.div>
@@ -294,7 +273,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Interactive Verification Flow Demo */}
+        {/* Verification Flow */}
         <section id="verification-flow" className="py-24 max-w-7xl mx-auto px-6 relative">
           <div className="text-center max-w-3xl mx-auto">
             <Badge variant="glow-blue">INSPECT PROTOCOL</Badge>
@@ -345,43 +324,37 @@ export default function LandingPage() {
 
                 <div className="flex-1 space-y-3 overflow-y-auto">
                   <div>
-                    <span className="text-accent-blue">$</span>{" hash_calculator --file=\"Corporate_Intel_Formula.pdf\""}
-                    <div className="text-zinc-500 mt-1">Calculating local SHA-256 fingerprint without server egress...</div>
+                    <span className="text-accent-blue">$</span>{" verdictchain upload --case=<case-id> --file=<artifact>"}
+                    <div className="text-zinc-500 mt-1">Authenticated upload begins backend validation and hashing...</div>
                   </div>
-                  <div>
-                    <div className="text-zinc-300 font-bold bg-secondary/50 p-2 rounded border border-border truncate mt-1">
-                      {simulatedHash}
-                    </div>
+                  <div className="text-zinc-300 font-bold bg-secondary/50 p-2 rounded border border-border truncate">
+                    SHA-256: persisted evidence fingerprint
                   </div>
                   
                   {activeStep >= 1 && (
                     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
-                      <span className="text-accent-purple">$</span>{` sui_anchor --hash="${simulatedHash.slice(0, 10)}..." --network="mainnet"`}
-                      <div className="text-accent-green mt-1">✔ Transaction settled on Sui Consensus. Anchor verified!</div>
-                      <div className="text-zinc-500">Block ID: #14,890,202 | Transaction ID: 0x8a23fa...8921</div>
+                      <span className="text-accent-purple">$</span>{" sui client call --function seal_evidence --network devnet"}
+                      <div className="text-accent-green mt-1">Transaction digest stored with the proof record.</div>
+                      <div className="text-zinc-500">Sui reads verify through Tatum devnet RPC.</div>
                     </motion.div>
                   )}
 
                   {activeStep >= 2 && (
                     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
-                      <span className="text-accent-green">$</span> walrus_blob_storage --verify
-                      <div className="text-zinc-300 mt-1">Preserved on decentralized Walrus storage.</div>
-                      <div className="text-zinc-500">Blob Address: walrus://blob/ab93fa-ca28-4ef1-8921-debc890</div>
+                      <span className="text-accent-green">$</span> tatum walrus upload-status --job=&lt;job-id&gt;
+                      <div className="text-zinc-300 mt-1">Walrus certification status is refreshable from the receipt.</div>
+                      <div className="text-zinc-500">Blob ID and job ID come from Tatum Data API responses.</div>
                     </motion.div>
                   )}
                 </div>
 
                 <div className="border-t border-border/40 pt-3 flex items-center justify-between mt-auto">
-                  <span className="text-xs">Secure Cryptographic Anchor Proof</span>
-                  <Button 
-                    variant="glow" 
-                    size="sm" 
-                    className="text-[10px] px-2 py-1 font-semibold"
-                    onClick={triggerHashSimulation}
-                    disabled={simulating}
-                  >
-                    {simulating ? "Simulating..." : "Trigger Simulation"}
-                  </Button>
+                  <span className="text-xs">Live Upload and Verification Paths</span>
+                  <Link href="/dashboard/upload">
+                    <Button variant="glow" size="sm" className="text-[10px] px-2 py-1 font-semibold">
+                      Open Upload
+                    </Button>
+                  </Link>
                 </div>
               </Card>
             </div>
@@ -448,7 +421,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Vector architecture diagram mockup */}
+            {/* Architecture diagram */}
             <Card variant="glass" className="p-8 bg-[#09090b]/80 border border-border/60">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center justify-center relative">
                 {/* Node 1 */}
