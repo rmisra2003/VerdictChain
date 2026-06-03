@@ -10,7 +10,7 @@ import {
   GitBranch, 
   UploadCloud, 
   CheckSquare, 
-  Wallet, 
+  Mail, 
   Bell, 
   Clock,
   Menu,
@@ -68,9 +68,7 @@ export default function DashboardLayout({
     .join("")
     .toUpperCase() || "VC";
 
-  const walletLabel = user?.wallet_address
-    ? `${user.wallet_address.slice(0, 10)}...${user.wallet_address.slice(-6)}`
-    : "No wallet bound";
+  const identityLabel = user?.email || "No email session";
 
   const signOut = () => {
     clearAuthSession();
@@ -147,13 +145,13 @@ export default function DashboardLayout({
           })}
         </nav>
 
-        {/* Notary Wallet Connection Indicator */}
+        {/* Session and network indicator */}
         <div className="p-4 border-t border-border/40 bg-black/40 space-y-3">
           <div className="flex items-center gap-2.5 bg-secondary/80 p-2.5 rounded-lg border border-border/80 text-[10px] font-mono">
-            <Wallet className="w-3.5 h-3.5 text-accent-blue flex-shrink-0" />
+            <Mail className="w-3.5 h-3.5 text-accent-blue flex-shrink-0" />
             <div className="space-y-0.5 truncate">
-              <div className="text-zinc-400 font-bold">{user ? "Sui identity" : "Signed out"}</div>
-              <div className="text-zinc-500 truncate text-[9px]">{walletLabel}</div>
+              <div className="text-zinc-400 font-bold">{user ? "Email session" : "Signed out"}</div>
+              <div className="text-zinc-500 truncate text-[9px]">{identityLabel}</div>
             </div>
           </div>
           <div className="flex items-center justify-between text-[9px] text-zinc-500 px-1">
@@ -275,8 +273,8 @@ export default function DashboardLayout({
 
                 <div className="p-4 border-t border-border/40 bg-black/40">
                   <div className="flex items-center gap-2 bg-secondary p-2.5 rounded-lg border border-border text-[9px] font-mono">
-                    <Wallet className="w-3.5 h-3.5 text-accent-blue" />
-                    <div className="truncate text-zinc-400">{walletLabel}</div>
+                    <Mail className="w-3.5 h-3.5 text-accent-blue" />
+                    <div className="truncate text-zinc-400">{identityLabel}</div>
                   </div>
                 </div>
               </motion.aside>

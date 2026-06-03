@@ -1,20 +1,11 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowLeft, Shield, Wallet } from "lucide-react";
+import { ArrowLeft, Mail, Shield } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-
-const SuiWalletAuth = dynamic(() => import("./SuiWalletAuth"), {
-  ssr: false,
-  loading: () => (
-    <div className="rounded-lg border border-border/80 bg-secondary/40 p-5 text-sm text-zinc-400">
-      Loading wallet session...
-    </div>
-  ),
-});
+import EmailAuth from "./EmailAuth";
 
 export default function AuthPage() {
   return (
@@ -40,25 +31,25 @@ export default function AuthPage() {
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <section className="lg:col-span-5 space-y-5">
-          <Badge variant="active">Wallet Access</Badge>
+          <Badge variant="active">Email Access</Badge>
           <div className="space-y-3">
             <h1 className="text-3xl font-extrabold tracking-tight text-white">
-              Sign in with your Sui wallet
+              Investigator sign in
             </h1>
             <p className="text-sm text-zinc-400 leading-relaxed">
-              VerdictChain uses Sui personal-message signatures for investigator sessions. No passwords, no demo users, no mock auth path.
+              Use an email session to open case vaults, upload evidence, and generate verification artifacts.
             </p>
           </div>
 
           <Card variant="glass" className="p-5 space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
-                <Wallet className="w-4 h-4 text-accent-blue" />
+                <Mail className="w-4 h-4 text-accent-blue" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-white">Wallet-only sessions</h2>
+                <h2 className="text-sm font-bold text-white">Fast judge-friendly access</h2>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  The backend verifies a signed one-time challenge, creates the wallet profile when needed, and issues the JWT used by the forensic workspace.
+                  The forensic pipeline still uses Tatum, Walrus, and Sui devnet proofing after sign-in.
                 </p>
               </div>
             </div>
@@ -67,7 +58,7 @@ export default function AuthPage() {
 
         <section className="lg:col-span-7">
           <Card variant="glass" className="p-6">
-            <SuiWalletAuth />
+            <EmailAuth />
           </Card>
         </section>
       </main>

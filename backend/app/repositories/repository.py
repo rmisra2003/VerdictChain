@@ -17,7 +17,6 @@ from app.models.models import (
     Proof,
     Timeline,
     User,
-    WalletChallenge,
 )
 
 T = TypeVar("T")
@@ -101,14 +100,6 @@ class UserRepository(GenericRepository[User]):
             select(self.model).where(self.model.email == email)
         )
         return result.scalars().first()
-
-    async def get_by_wallet(self, db: AsyncSession, wallet_address: str) -> Optional[User]:
-        """Look up a user by bound Sui wallet address."""
-        result = await db.execute(
-            select(self.model).where(self.model.wallet_address == wallet_address)
-        )
-        return result.scalars().first()
-
 
 # ── Case Vault ──────────────────────────────────────────────────────────────
 
@@ -318,4 +309,3 @@ timeline_repo = TimelineRepository(Timeline)
 report_repo = ReportRepository(InvestigationReport)
 graph_repo = GraphRepository(GraphSnapshot)
 audit_log_repo = AuditLogRepository(AuditLog)
-wallet_challenge_repo = GenericRepository(WalletChallenge)

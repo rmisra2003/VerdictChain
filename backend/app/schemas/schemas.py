@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -22,7 +22,6 @@ class UserResponse(BaseModel):
     id: uuid.UUID
     email: str
     name: str
-    wallet_address: Optional[str] = None
     created_at: datetime
 
 
@@ -33,28 +32,19 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
-class WalletChallengeRequest(BaseModel):
-    """Request a one-time Sui wallet login challenge."""
+class UserRegisterRequest(BaseModel):
+    """Request body for creating an email/password user session."""
 
-    wallet_address: str = Field(..., min_length=66, max_length=66, pattern=r"^0x[a-fA-F0-9]{64}$")
-
-
-class WalletChallengeResponse(BaseModel):
-    """Challenge message that must be signed by the Sui wallet."""
-
-    wallet_address: str
-    nonce: str
-    message: str
-    expires_at: datetime
+    email: EmailStr
+    name: str = Field(..., min_length=1, max_length=255)
+    password: str = Field(..., min_length=8, max_length=128)
 
 
-class WalletLoginRequest(BaseModel):
-    """Complete wallet login with a signed Sui personal message."""
+class UserLoginRequest(BaseModel):
+    """Request body for creating an email/password session."""
 
-    wallet_address: str = Field(..., min_length=66, max_length=66, pattern=r"^0x[a-fA-F0-9]{64}$")
-    nonce: str = Field(..., min_length=16, max_length=255)
-    message_bytes: str = Field(..., min_length=1)
-    signature: str = Field(..., min_length=1)
+    email: EmailStr
+    password: str = Field(..., min_length=1, max_length=128)
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗

@@ -52,12 +52,11 @@ Required environment:
 
 ```ini
 NEXT_PUBLIC_API_BASE_URL=https://your-backend-domain.com
-NEXT_PUBLIC_SUI_NETWORK=devnet
 ```
 
 ## Demo Flow
 
-1. Open `/auth`, connect a Sui wallet, and sign the VerdictChain challenge.
+1. Open `/auth` and create or sign into an email account.
 2. Open `/dashboard/cases` and create a case vault.
 3. Open `/dashboard/upload`.
 4. Upload a supported file.

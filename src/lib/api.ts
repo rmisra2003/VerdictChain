@@ -7,7 +7,6 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  wallet_address?: string | null;
   created_at: string;
 }
 
@@ -137,11 +136,13 @@ export interface TatumWalrusJobStatus {
   [key: string]: unknown;
 }
 
-export interface SuiWalletChallenge {
-  wallet_address: string;
-  nonce: string;
-  message: string;
-  expires_at: string;
+export interface EmailLoginInput {
+  email: string;
+  password: string;
+}
+
+export interface EmailRegisterInput extends EmailLoginInput {
+  name: string;
 }
 
 export function isApiConfigured(): boolean {
@@ -206,8 +207,17 @@ async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`API request failed (${response.status}): ${detail}`);
+    const rawDetail = await response.text();
+    let detail = rawDetail;
+    try {
+      const parsed = JSON.parse(rawDetail) as { detail?: unknown };
+      if (typeof parsed.detail === "string") {
+        detail = parsed.detail;
+      }
+    } catch {
+      // Keep the raw response text when the backend does not return JSON.
+    }
+    throw new Error(detail || `API request failed (${response.status}).`);
   }
 
   if (response.status === 204) {
@@ -221,22 +231,23 @@ export async function getCurrentUser(): Promise<UserProfile> {
   return apiRequest<UserProfile>("/api/auth/me", {}, { auth: true });
 }
 
-export async function requestSuiWalletChallenge(walletAddress: string): Promise<SuiWalletChallenge> {
-  return apiRequest<SuiWalletChallenge>("/api/auth/wallet/challenge", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ wallet_address: walletAddress }),
-  });
+export async function loginWithEmail(input: EmailLoginInput): Promise<AuthSession> {
+  const tokenResponse = await apiRequest<{ access_token: string; token_type: "bearer" }>(
+    "/api/auth/login",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  storeAuthToken(tokenResponse.access_token);
+  const user = await getCurrentUser();
+  return { token: tokenResponse.access_token, user };
 }
 
-export async function loginWithSuiWalletSignature(input: {
-  wallet_address: string;
-  nonce: string;
-  message_bytes: string;
-  signature: string;
-}): Promise<AuthSession> {
+export async function registerWithEmail(input: EmailRegisterInput): Promise<AuthSession> {
   const tokenResponse = await apiRequest<{ access_token: string; token_type: "bearer" }>(
-    "/api/auth/wallet/login",
+    "/api/auth/register",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

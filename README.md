@@ -43,7 +43,7 @@ The backend upload flow was tested end-to-end: file upload, Tatum/Walrus storage
 - Public verification API that checks local file hashes against registered evidence, verifies Sui transaction status, and checks Walrus blob reachability.
 - Tatum integration surfaced in the product: upload receipts show Tatum Walrus job IDs, blob IDs, certification state, and a live Tatum job-status refresh.
 - DeepSeek-powered extraction pipeline for entities, timelines, reports, graph snapshots, and trust score inputs.
-- Sui wallet-only sessions with backend challenge/login endpoints for standard Sui keypair personal-message signatures.
+- Email/password investigator sessions with backend-issued JWTs.
 - Docker and runtime files for backend deployment.
 
 ## Architecture
@@ -148,7 +148,7 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-chat
 ```
 
-Do not commit `.env`, `.env.local`, private keys, or wallet secrets.
+Do not commit `.env`, `.env.local`, private keys, or API secrets.
 
 ## Sui Notary
 
@@ -193,8 +193,8 @@ sui move build --path sui/verdictchain_notary --build-env testnet --warnings-are
 
 ## Production Notes
 
-- The frontend now requires a Sui wallet challenge login through `/auth`; create a case vault before uploading evidence.
-- Wallet sessions are implemented as backend challenge/login endpoints for Ed25519, Secp256k1, and Secp256r1 personal-message signatures.
+- The frontend uses email/password sign-in through `/auth`; create a case vault before uploading evidence.
+- User sessions are backend-issued JWTs from `/api/auth/register`, `/api/auth/login`, and `/api/auth/me`.
 - The current devnet sealing path uses the local Sui CLI signer. For hosted production, replace this with a hardened signer service, key management system, or sponsored transaction worker.
 - Tatum/Walrus certification can be asynchronous; upload responses include the Tatum job and blob metadata.
 - Backend table creation is automatic for local velocity. Use Alembic migrations before a serious production launch.
