@@ -62,7 +62,7 @@ VerdictChain combines:
 
 ## Recommended Demo Evidence
 
-Use synthetic evidence, not private documents. A small `.txt`, `.json`, `.csv`, or `.pdf` file works best because it uploads quickly and makes the hash test easy to repeat.
+Use synthetic evidence, not private documents. A small `.txt`, `.json`, `.csv`, `.pdf`, or readable `.png`/`.jpg`/`.webp` screenshot works best because it uploads quickly and makes the hash test easy to repeat.
 
 Example `.txt` file:
 
@@ -115,7 +115,7 @@ DeepSeek powers the investigation intelligence layer after VerdictChain extracts
 
 - Direct text extraction from `.txt`, `.json`, `.csv`, and spreadsheet uploads.
 - PDF text extraction for selectable PDF content.
-- Image OCR when the Tesseract runtime is available.
+- Image OCR through the Tesseract runtime included in the production backend image.
 - Optional audio transcription through a configured provider before DeepSeek analysis.
 - Entity extraction from decoded evidence text.
 - Case timelines from evidence metadata.

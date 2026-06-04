@@ -222,7 +222,9 @@ class MediaExtractionService:
         try:
             import pytesseract
 
-            text = pytesseract.image_to_string(image)
+            prepared_image = self._prepare_image_for_ocr(image)
+            text = pytesseract.image_to_string(prepared_image)
+            metadata["ocr_engine"] = "tesseract"
             return self._limit(text), metadata, warnings
         except Exception as exc:
             warnings.append(
@@ -230,6 +232,18 @@ class MediaExtractionService:
             )
             warnings.append(str(exc))
             return "", metadata, warnings
+
+    def _prepare_image_for_ocr(self, image) -> Any:
+        """Increase OCR contrast and scale small images before Tesseract."""
+        from PIL import ImageOps
+
+        prepared = image.convert("L")
+        width, height = prepared.size
+        scale = 2 if max(width, height) < 1600 else 1
+        if scale > 1:
+            prepared = prepared.resize((width * scale, height * scale))
+        prepared = ImageOps.autocontrast(prepared)
+        return prepared
 
     async def _extract_audio(self, file_data: bytes, content_type: str) -> tuple[str, dict[str, Any], list[str]]:
         provider = settings.AUDIO_TRANSCRIPTION_PROVIDER.lower()

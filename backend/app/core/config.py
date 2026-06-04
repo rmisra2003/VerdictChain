@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     # ── File Upload ─────────────────────────────────────────────────────
     MAX_FILE_SIZE_MB: int = 50
     ALLOWED_MIME_TYPES: str = (
-        "application/pdf,image/png,image/jpeg,video/mp4,audio/wav,"
+        "application/pdf,image/png,image/jpeg,image/webp,video/mp4,audio/wav,"
         "audio/mpeg,text/plain,text/csv,application/json,"
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )

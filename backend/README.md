@@ -103,6 +103,8 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
 
 # Optional media extraction providers
+# Image OCR uses local Tesseract. The Docker image installs tesseract-ocr
+# and tesseract-ocr-eng for PNG/JPEG/WebP evidence analysis.
 AUDIO_TRANSCRIPTION_PROVIDER=none
 DEEPGRAM_API_KEY=
 
@@ -114,7 +116,7 @@ CORS_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
 
 # Security Rules
 MAX_FILE_SIZE_MB=50
-ALLOWED_MIME_TYPES=application/pdf,image/png,image/jpeg,video/mp4,audio/wav,audio/mpeg,text/plain,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+ALLOWED_MIME_TYPES=application/pdf,image/png,image/jpeg,image/webp,video/mp4,audio/wav,audio/mpeg,text/plain,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 ```
 
 > Production guardrail: `TATUM_API_KEY` and `DEEPSEEK_API_KEY` are required for live storage/RPC/AI paths. Placeholder keys fail closed.

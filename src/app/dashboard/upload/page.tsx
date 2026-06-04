@@ -10,6 +10,7 @@ import {
   Briefcase,
   BrainCircuit,
   Database,
+  AlertTriangle,
   Network,
   ShieldCheck,
 } from "lucide-react";
@@ -40,6 +41,8 @@ interface UploadReceipt {
   extractionStatus?: string;
   analysisSummary?: string;
   aiArtifactBlob?: string | null;
+  extractionWarnings?: string[];
+  extractedTextExcerpt?: string | null;
   tatumStatusCheckedAt?: string;
   timestamp: string;
 }
@@ -132,6 +135,10 @@ export default function EvidenceUploadPage() {
       setStep(3);
       const selectedCaseTitle =
         cases.find((item) => item.id === associatedCase)?.title || "Selected case vault";
+      const metadataWarnings = result.analysis?.extraction_metadata?.warnings;
+      const extractionWarnings = Array.isArray(metadataWarnings)
+        ? metadataWarnings.filter((item): item is string => typeof item === "string")
+        : [];
       setReceipt({
         filename: result.evidence.filename,
         size: `${(result.evidence.file_size / (1024 * 1024)).toFixed(2)} MB`,
@@ -148,6 +155,8 @@ export default function EvidenceUploadPage() {
             ? result.analysis.summary_json.summary
             : undefined,
         aiArtifactBlob: result.analysis?.walrus_blob_id,
+        extractionWarnings,
+        extractedTextExcerpt: result.analysis?.text_excerpt,
         timestamp: result.evidence.created_at,
       });
       setFile(null);
@@ -458,13 +467,37 @@ export default function EvidenceUploadPage() {
                   </div>
                 </div>
 
-                {(receipt.analysisSummary || receipt.aiArtifactBlob) && (
+                {(receipt.analysisSummary ||
+                  receipt.aiArtifactBlob ||
+                  receipt.extractedTextExcerpt ||
+                  (receipt.extractionWarnings?.length ?? 0) > 0) && (
                   <div className="mt-4 rounded-lg border border-accent-yellow/20 bg-accent-yellow/5 p-3">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-accent-yellow">AI Evidence Intelligence</p>
                         {receipt.analysisSummary && (
                           <p className="mt-1 text-xs leading-relaxed text-zinc-300">{receipt.analysisSummary}</p>
+                        )}
+                        {receipt.extractedTextExcerpt && (
+                          <div className="mt-3 rounded-lg border border-border/70 bg-black/35 p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Extracted Text Preview</p>
+                            <p className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-zinc-300">
+                              {receipt.extractedTextExcerpt}
+                            </p>
+                          </div>
+                        )}
+                        {(receipt.extractionWarnings?.length ?? 0) > 0 && (
+                          <div className="mt-3 space-y-1.5">
+                            {receipt.extractionWarnings?.map((warning, index) => (
+                              <div
+                                key={`${warning}-${index}`}
+                                className="flex items-start gap-2 rounded-lg border border-accent-yellow/20 bg-black/25 px-3 py-2 text-[10px] text-zinc-300"
+                              >
+                                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-yellow" />
+                                <span>{warning}</span>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                       {receipt.aiArtifactBlob && (
