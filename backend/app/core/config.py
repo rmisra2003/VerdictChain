@@ -54,10 +54,6 @@ class Settings(BaseSettings):
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     DEEPSEEK_MODEL: str = "deepseek-v4-flash"
 
-    # ── Optional Media Extraction Providers ─────────────────────────────
-    AUDIO_TRANSCRIPTION_PROVIDER: str = "none"  # none | deepgram
-    DEEPGRAM_API_KEY: str = ""
-
     # ── Server ──────────────────────────────────────────────────────────
     HOST: str = "0.0.0.0"
     PORT: int = 8000
@@ -67,8 +63,8 @@ class Settings(BaseSettings):
     # ── File Upload ─────────────────────────────────────────────────────
     MAX_FILE_SIZE_MB: int = 50
     ALLOWED_MIME_TYPES: str = (
-        "application/pdf,image/png,image/jpeg,image/webp,video/mp4,audio/wav,"
-        "audio/mpeg,text/plain,text/csv,application/json,"
+        "application/pdf,image/png,image/jpeg,image/webp,video/mp4,"
+        "text/plain,text/csv,application/json,"
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 

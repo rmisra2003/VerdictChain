@@ -166,6 +166,16 @@ export function isApiConfigured(): boolean {
   return API_BASE_URL.length > 0;
 }
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(TOKEN_KEY);
@@ -234,7 +244,7 @@ async function apiRequest<T>(
     } catch {
       // Keep the raw response text when the backend does not return JSON.
     }
-    throw new Error(detail || `API request failed (${response.status}).`);
+    throw new ApiError(detail || `API request failed (${response.status}).`, response.status);
   }
 
   if (response.status === 204) {
@@ -311,6 +321,14 @@ export async function listEvidenceByCase(caseId: string): Promise<EvidenceRecord
   );
 }
 
+export async function listEvidenceAnalysisByCase(caseId: string): Promise<EvidenceAnalysisRecord[]> {
+  return apiRequest<EvidenceAnalysisRecord[]>(
+    `/api/evidence/case/${encodeURIComponent(caseId)}/analysis`,
+    {},
+    { auth: true },
+  );
+}
+
 export async function uploadEvidenceToApi(
   file: File,
   caseId: string,
@@ -361,7 +379,7 @@ export async function getCaseTimeline(caseId: string): Promise<TimelineRecord | 
       { auth: true },
     );
   } catch (error) {
-    if (error instanceof Error && error.message.includes("(404)")) return null;
+    if (error instanceof ApiError && error.status === 404) return null;
     throw error;
   }
 }
@@ -382,7 +400,7 @@ export async function getCaseReport(caseId: string): Promise<ReportRecord | null
       { auth: true },
     );
   } catch (error) {
-    if (error instanceof Error && error.message.includes("(404)")) return null;
+    if (error instanceof ApiError && error.status === 404) return null;
     throw error;
   }
 }
@@ -403,7 +421,7 @@ export async function getCaseGraph(caseId: string): Promise<GraphRecord | null> 
       { auth: true },
     );
   } catch (error) {
-    if (error instanceof Error && error.message.includes("(404)")) return null;
+    if (error instanceof ApiError && error.status === 404) return null;
     throw error;
   }
 }

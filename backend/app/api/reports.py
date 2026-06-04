@@ -102,24 +102,6 @@ def _analysis_for_prompt(analysis) -> dict:
     }
 
 
-@router.get("/{report_id}", response_model=ReportResponse)
-async def get_report(
-    report_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
-    """Retrieve a generated investigation report by its ID."""
-    report = await report_repo.get_by_id(db, report_id)
-    if report is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
-
-    case = await case_repo.get_by_id(db, report.case_id)
-    if case is None or case.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
-
-    return report
-
-
 @router.get("/case/{case_id}", response_model=ReportResponse)
 async def get_case_report(
     case_id: UUID,
@@ -134,5 +116,23 @@ async def get_case_report(
     report = await report_repo.get_by_case(db, case_id)
     if report is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No report found for this case")
+
+    return report
+
+
+@router.get("/{report_id}", response_model=ReportResponse)
+async def get_report(
+    report_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Retrieve a generated investigation report by its ID."""
+    report = await report_repo.get_by_id(db, report_id)
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+
+    case = await case_repo.get_by_id(db, report.case_id)
+    if case is None or case.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
 
     return report

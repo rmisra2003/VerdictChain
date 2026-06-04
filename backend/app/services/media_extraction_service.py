@@ -16,10 +16,6 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-import httpx
-
-from app.core.config import settings
-
 logger = logging.getLogger(__name__)
 
 MAX_EXTRACTED_CHARS = 30000
@@ -93,19 +89,13 @@ class MediaExtractionService:
                 status = "extracted" if text.strip() else "metadata_only"
                 return ExtractionResult(media_kind, status, text, metadata, warnings)
 
-            if media_kind == "audio":
-                text, audio_meta, warnings = await self._extract_audio(file_data, normalized_type)
-                metadata.update(audio_meta)
-                status = "extracted" if text.strip() else "metadata_only"
-                return ExtractionResult(media_kind, status, text, metadata, warnings)
-
             if media_kind == "video":
                 return ExtractionResult(
                     media_kind,
                     "metadata_only",
                     "",
                     metadata,
-                    ["Video keyframe/audio extraction is not configured in this deployment."],
+                    ["Video keyframe extraction is not configured in this deployment."],
                 )
 
             return ExtractionResult(
@@ -147,8 +137,6 @@ class MediaExtractionService:
             return "pdf"
         if content_type.startswith("image/") or suffix in {"png", "jpg", "jpeg", "webp"}:
             return "image"
-        if content_type.startswith("audio/") or suffix in {"wav", "mp3", "m4a", "aac", "flac"}:
-            return "audio"
         if content_type.startswith("video/") or suffix in {"mp4", "mov", "mkv", "webm"}:
             return "video"
         if suffix in {"xlsx", "xlsm"}:
@@ -244,30 +232,6 @@ class MediaExtractionService:
             prepared = prepared.resize((width * scale, height * scale))
         prepared = ImageOps.autocontrast(prepared)
         return prepared
-
-    async def _extract_audio(self, file_data: bytes, content_type: str) -> tuple[str, dict[str, Any], list[str]]:
-        provider = settings.AUDIO_TRANSCRIPTION_PROVIDER.lower()
-        metadata = {"transcription_provider": provider}
-        if provider != "deepgram" or not settings.DEEPGRAM_API_KEY:
-            return "", metadata, ["Audio transcription provider is not configured."]
-
-        url = "https://api.deepgram.com/v1/listen?smart_format=true&punctuate=true&diarize=true"
-        headers = {
-            "Authorization": f"Token {settings.DEEPGRAM_API_KEY}",
-            "Content-Type": content_type,
-        }
-        async with httpx.AsyncClient(timeout=httpx.Timeout(90.0, connect=10.0)) as client:
-            response = await client.post(url, content=file_data, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-        metadata["deepgram_response"] = data
-        text = (
-            data.get("results", {})
-            .get("channels", [{}])[0]
-            .get("alternatives", [{}])[0]
-            .get("transcript", "")
-        )
-        return self._limit(text), metadata, []
 
     def _decode(self, file_data: bytes) -> str:
         for encoding in ("utf-8", "utf-16", "latin-1"):

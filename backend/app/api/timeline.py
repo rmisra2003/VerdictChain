@@ -91,24 +91,6 @@ def _analysis_for_prompt(analysis) -> dict:
     }
 
 
-@router.get("/{timeline_id}", response_model=TimelineResponse)
-async def get_timeline(
-    timeline_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
-    """Retrieve a generated timeline by its ID."""
-    timeline = await timeline_repo.get_by_id(db, timeline_id)
-    if timeline is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeline not found")
-
-    case = await case_repo.get_by_id(db, timeline.case_id)
-    if case is None or case.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeline not found")
-
-    return timeline
-
-
 @router.get("/case/{case_id}", response_model=TimelineResponse)
 async def get_case_timeline(
     case_id: UUID,
@@ -123,5 +105,23 @@ async def get_case_timeline(
     timeline = await timeline_repo.get_by_case(db, case_id)
     if timeline is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No timeline found for this case")
+
+    return timeline
+
+
+@router.get("/{timeline_id}", response_model=TimelineResponse)
+async def get_timeline(
+    timeline_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Retrieve a generated timeline by its ID."""
+    timeline = await timeline_repo.get_by_id(db, timeline_id)
+    if timeline is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeline not found")
+
+    case = await case_repo.get_by_id(db, timeline.case_id)
+    if case is None or case.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeline not found")
 
     return timeline

@@ -258,6 +258,20 @@ async def list_case_evidence(
     return await evidence_repo.get_by_case(db, case_id)
 
 
+@router.get("/case/{case_id}/analysis", response_model=list[EvidenceAnalysisResponse])
+async def list_case_evidence_analysis(
+    case_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """List extracted intelligence records for evidence in a case."""
+    case = await case_repo.get_by_id(db, case_id)
+    if case is None or case.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    return await evidence_analysis_repo.get_by_case(db, case_id)
+
+
 @router.get("/{evidence_id}", response_model=EvidenceResponse)
 async def get_evidence(
     evidence_id: UUID,

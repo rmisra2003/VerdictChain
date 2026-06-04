@@ -116,7 +116,6 @@ DeepSeek powers the investigation intelligence layer after VerdictChain extracts
 - Direct text extraction from `.txt`, `.json`, `.csv`, and spreadsheet uploads.
 - PDF text extraction for selectable PDF content.
 - Image OCR through the Tesseract runtime included in the production backend image.
-- Optional audio transcription through a configured provider before DeepSeek analysis.
 - Entity extraction from decoded evidence text.
 - Case timelines from evidence metadata.
 - Investigation reports with findings, risk assessment, and recommendations.
@@ -270,9 +269,6 @@ TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
 DEEPSEEK_API_KEY=your-deepseek-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
-
-AUDIO_TRANSCRIPTION_PROVIDER=none
-DEEPGRAM_API_KEY=
 
 CORS_ORIGINS=["http://localhost:3000","https://your-frontend.vercel.app"]
 ```

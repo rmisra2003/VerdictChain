@@ -9,6 +9,8 @@ import {
   Download,
   ExternalLink,
   Bot,
+  BrainCircuit,
+  Database,
   RefreshCw,
   GitBranch,
   Clock,
@@ -19,6 +21,7 @@ import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CaseRecord,
+  EvidenceAnalysisRecord,
   EvidenceRecord,
   generateCaseGraph,
   generateCaseReport,
@@ -28,6 +31,7 @@ import {
   getCaseReport,
   getCaseTimeline,
   GraphRecord,
+  listEvidenceAnalysisByCase,
   listEvidenceByCase,
   ReportRecord,
   TimelineRecord,
@@ -41,6 +45,48 @@ const tabs: Array<{ id: ActiveTab; label: string }> = [
   { id: "graph", label: "Relationship Graph" },
   { id: "report", label: "Forensic Report" },
 ];
+
+const entityBuckets: Array<{ key: string; label: string }> = [
+  { key: "people", label: "People" },
+  { key: "organizations", label: "Organizations" },
+  { key: "amounts", label: "Amounts" },
+  { key: "dates", label: "Dates" },
+  { key: "locations", label: "Locations" },
+  { key: "risk_flags", label: "Risk Flags" },
+];
+
+function recordArray(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object" && !Array.isArray(item))
+    : [];
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
+}
+
+function analysisSummary(analysis: EvidenceAnalysisRecord | null): string {
+  const summary = analysis?.summary_json?.summary;
+  return typeof summary === "string" && summary.trim().length > 0
+    ? summary
+    : "No AI summary has been stored for this evidence yet.";
+}
+
+function entityTitle(item: Record<string, unknown>): string {
+  const value = item.name || item.value || item.date || item.flag || item.id;
+  return typeof value === "string" && value.trim().length > 0 ? value : "Extracted entity";
+}
+
+function entityDetail(item: Record<string, unknown>): string {
+  const detail =
+    item.role ||
+    item.type ||
+    item.context ||
+    item.rationale ||
+    item.currency ||
+    item.severity;
+  return typeof detail === "string" && detail.trim().length > 0 ? detail : "";
+}
 
 function JsonBlock({ data }: { data: unknown }) {
   return (
@@ -57,6 +103,7 @@ export default function CaseWorkspace() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("evidence");
   const [currentCase, setCurrentCase] = useState<CaseRecord | null>(null);
   const [evidence, setEvidence] = useState<EvidenceRecord[]>([]);
+  const [analyses, setAnalyses] = useState<EvidenceAnalysisRecord[]>([]);
   const [selectedEvidence, setSelectedEvidence] = useState<EvidenceRecord | null>(null);
   const [timeline, setTimeline] = useState<TimelineRecord | null>(null);
   const [report, setReport] = useState<ReportRecord | null>(null);
@@ -73,9 +120,10 @@ export default function CaseWorkspace() {
       setLoading(true);
       setErrorMessage("");
       try {
-        const [caseData, evidenceData, timelineData, reportData, graphData] = await Promise.all([
+        const [caseData, evidenceData, analysisData, timelineData, reportData, graphData] = await Promise.all([
           getCase(caseId),
           listEvidenceByCase(caseId),
+          listEvidenceAnalysisByCase(caseId),
           getCaseTimeline(caseId),
           getCaseReport(caseId),
           getCaseGraph(caseId),
@@ -83,6 +131,7 @@ export default function CaseWorkspace() {
         if (!mounted) return;
         setCurrentCase(caseData);
         setEvidence(evidenceData);
+        setAnalyses(analysisData);
         setSelectedEvidence(evidenceData[0] || null);
         setTimeline(timelineData);
         setReport(reportData);
@@ -140,6 +189,23 @@ export default function CaseWorkspace() {
       </div>
     );
   }
+
+  const selectedAnalysis = selectedEvidence
+    ? analyses.find((item) => item.evidence_id === selectedEvidence.id) || null
+    : null;
+  const selectedSummary = analysisSummary(selectedAnalysis);
+  const selectedWarnings = [
+    ...stringArray(selectedAnalysis?.extraction_metadata?.warnings),
+    ...stringArray(selectedAnalysis?.extraction_metadata?.deepseek_warnings),
+  ];
+  const selectedEntityGroups = selectedAnalysis
+    ? entityBuckets
+        .map((bucket) => ({
+          ...bucket,
+          items: recordArray(selectedAnalysis.entities_json?.[bucket.key]),
+        }))
+        .filter((bucket) => bucket.items.length > 0)
+    : [];
 
   return (
     <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto font-sans">
@@ -276,6 +342,88 @@ export default function CaseWorkspace() {
                           <div>
                             <span className="text-zinc-500 block">Created:</span>
                             <span className="text-zinc-300 font-mono">{new Date(selectedEvidence.created_at).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/40 pt-4 space-y-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-accent-yellow">
+                              <BrainCircuit className="h-4 w-4" />
+                              AI Evidence Intelligence
+                            </div>
+                            <p className="mt-2 text-xs leading-relaxed text-zinc-300">
+                              {selectedAnalysis ? selectedSummary : "No DeepSeek analysis exists for this evidence yet. Uploads created after the intelligence pipeline was enabled will include OCR/text extraction and summary artifacts."}
+                            </p>
+                          </div>
+                          <Badge variant={selectedAnalysis?.extraction_status === "extracted" ? "verified" : "pending"} className="shrink-0">
+                            {selectedAnalysis?.extraction_status || "not generated"}
+                          </Badge>
+                        </div>
+
+                        {selectedAnalysis?.text_excerpt && (
+                          <div className="rounded-lg border border-border/70 bg-black/35 p-3">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Extracted Text Preview</div>
+                            <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-zinc-300">
+                              {selectedAnalysis.text_excerpt}
+                            </pre>
+                          </div>
+                        )}
+
+                        {selectedEntityGroups.length > 0 && (
+                          <div className="space-y-3">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Extracted Entities</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {selectedEntityGroups.map((bucket) => (
+                                <div key={bucket.key} className="rounded-lg border border-border/70 bg-secondary/30 p-3">
+                                  <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{bucket.label}</div>
+                                  <div className="space-y-2">
+                                    {bucket.items.slice(0, 6).map((item, index) => {
+                                      const detail = entityDetail(item);
+                                      return (
+                                        <div key={`${bucket.key}-${index}`} className="rounded border border-border/50 bg-black/25 px-2 py-1.5">
+                                          <div className="text-[11px] font-bold text-white break-words">{entityTitle(item)}</div>
+                                          {detail && <div className="mt-0.5 text-[10px] text-zinc-500 break-words">{detail}</div>}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedWarnings.length > 0 && (
+                          <div className="rounded-lg border border-accent-yellow/20 bg-accent-yellow/5 p-3">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-accent-yellow">Extraction Notes</div>
+                            <div className="mt-2 space-y-1.5 text-[10px] text-zinc-300">
+                              {selectedWarnings.map((warning, index) => (
+                                <div key={`${warning}-${index}`}>{warning}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="rounded-lg border border-border/70 bg-secondary/30 p-3">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                              <Bot className="h-3.5 w-3.5 text-accent-blue" />
+                              Media Kind
+                            </div>
+                            <div className="mt-1 text-xs font-semibold text-white">
+                              {selectedAnalysis?.media_kind || "not analyzed"}
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-border/70 bg-secondary/30 p-3">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                              <Database className="h-3.5 w-3.5 text-accent-green" />
+                              AI Artifact Walrus Blob
+                            </div>
+                            <div className="mt-1 break-all font-mono text-[10px] text-zinc-300 select-all">
+                              {selectedAnalysis?.walrus_blob_id || "not stored yet"}
+                            </div>
                           </div>
                         </div>
                       </div>
