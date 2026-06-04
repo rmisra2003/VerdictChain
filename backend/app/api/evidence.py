@@ -9,8 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.api.deps import get_current_user
-from app.repositories.repository import case_repo, evidence_repo, proof_repo
-from app.schemas.schemas import EvidenceResponse, EvidenceUploadResponse, ProofResponse
+from app.repositories.repository import case_repo, evidence_repo, evidence_analysis_repo, proof_repo
+from app.schemas.schemas import (
+    EvidenceAnalysisResponse,
+    EvidenceResponse,
+    EvidenceUploadResponse,
+    ProofResponse,
+)
+from app.services.evidence_intelligence_service import evidence_intelligence_service
 from app.services.walrus_service import walrus_service
 from app.services.sui_service import sui_service
 from app.services.deepseek_service import deepseek_service
@@ -146,15 +152,39 @@ async def upload_evidence(
         },
     )
 
-    # ── 10. Background AI processing ────────────────────────────────────
-    # Attempt to decode file content for AI processing
+    # ── 10. Extract evidence intelligence + DeepSeek summary ─────────────
+    analysis = None
     try:
-        file_text = file_data.decode("utf-8", errors="ignore")
-    except Exception:
-        file_text = ""
+        analysis_payload = await evidence_intelligence_service.analyze_upload(
+            file_data=file_data,
+            content_type=content_type,
+            filename=safe_filename,
+            sha256_hash=sha256_hash,
+        )
+        analysis = await evidence_analysis_repo.create_or_update_for_evidence(
+            db,
+            evidence.id,
+            {
+                "case_id": case_id,
+                "evidence_id": evidence.id,
+                **analysis_payload,
+            },
+        )
+    except Exception as exc:
+        # Intelligence is additive; never break custody registration if it fails.
+        await log_action(
+            db,
+            action="analysis_failed",
+            entity_type="evidence_analysis",
+            entity_id=evidence.id,
+            user_id=current_user.id,
+            case_id=case_id,
+            details={"error": str(exc), "filename": safe_filename},
+        )
 
-    if file_text.strip():
-        background_tasks.add_task(_run_ai_processing, case_id, evidence.id, file_text)
+    # ── 11. Background lightweight entity pass for decoded text ───────────
+    if analysis and analysis.extracted_text:
+        background_tasks.add_task(_run_ai_processing, case_id, evidence.id, analysis.extracted_text)
 
     walrus_metadata = {
         "provider": walrus_result.get("provider"),
@@ -171,7 +201,7 @@ async def upload_evidence(
         else "Evidence uploaded, hashed, stored on Walrus, and anchored on Sui successfully."
     )
 
-    # ── 11. Return composite response ───────────────────────────────────
+    # ── 12. Return composite response ───────────────────────────────────
     return EvidenceUploadResponse(
         evidence=EvidenceResponse(
             id=evidence.id,
@@ -193,6 +223,7 @@ async def upload_evidence(
             timestamp=proof.timestamp,
             verification_status=proof.verification_status,
         ),
+        analysis=EvidenceAnalysisResponse.model_validate(analysis) if analysis else None,
         walrus_metadata=walrus_metadata,
         message=message,
     )

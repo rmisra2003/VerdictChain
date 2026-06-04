@@ -99,7 +99,11 @@ TATUM_MCP_URL=https://mcp.tatum.io
 # DeepSeek AI Integration
 DEEPSEEK_API_KEY=your-deepseek-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-v4-flash
+
+# Optional media extraction providers
+AUDIO_TRANSCRIPTION_PROVIDER=none
+DEEPGRAM_API_KEY=
 
 # Server Launch Controls
 HOST=0.0.0.0

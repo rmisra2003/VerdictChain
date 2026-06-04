@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.api.deps import get_current_user
-from app.repositories.repository import case_repo, evidence_repo, timeline_repo
+from app.repositories.repository import case_repo, evidence_analysis_repo, evidence_repo, timeline_repo
 from app.schemas.schemas import TimelineResponse
 from app.services.deepseek_service import deepseek_service
 from app.services.walrus_service import walrus_service
@@ -30,6 +30,8 @@ async def generate_timeline(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
 
     evidences = await evidence_repo.get_by_case(db, case_id)
+    analyses = await evidence_analysis_repo.get_by_case(db, case_id)
+    analysis_by_evidence = {str(item.evidence_id): item for item in analyses}
 
     evidence_list = [
         {
@@ -39,6 +41,7 @@ async def generate_timeline(
             "sha256_hash": e.sha256_hash,
             "verification_status": e.verification_status,
             "created_at": str(e.created_at),
+            "analysis": _analysis_for_prompt(analysis_by_evidence.get(str(e.id))),
         }
         for e in evidences
     ]
@@ -70,6 +73,22 @@ async def generate_timeline(
     )
 
     return timeline
+
+
+def _analysis_for_prompt(analysis) -> dict:
+    if not analysis:
+        return {}
+    summary = analysis.summary_json or {}
+    return {
+        "media_kind": analysis.media_kind,
+        "extraction_status": analysis.extraction_status,
+        "summary": summary.get("summary"),
+        "key_observations": summary.get("key_observations", []),
+        "dates": (analysis.entities_json or {}).get("dates", []),
+        "amounts": (analysis.entities_json or {}).get("amounts", []),
+        "risk_flags": (analysis.entities_json or {}).get("risk_flags", []),
+        "text_excerpt": analysis.text_excerpt,
+    }
 
 
 @router.get("/{timeline_id}", response_model=TimelineResponse)
@@ -106,4 +125,3 @@ async def get_case_timeline(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No timeline found for this case")
 
     return timeline
-

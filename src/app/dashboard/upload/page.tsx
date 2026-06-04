@@ -36,6 +36,10 @@ interface UploadReceipt {
   walrusBlob: string;
   walrusJobId?: string;
   walrusStatus?: string;
+  mediaKind?: string;
+  extractionStatus?: string;
+  analysisSummary?: string;
+  aiArtifactBlob?: string | null;
   tatumStatusCheckedAt?: string;
   timestamp: string;
 }
@@ -137,6 +141,13 @@ export default function EvidenceUploadPage() {
         walrusBlob: result.evidence.walrus_blob_id || result.walrus_metadata.blob_id || "pending",
         walrusJobId: result.walrus_metadata.job_id,
         walrusStatus: result.walrus_metadata.status,
+        mediaKind: result.analysis?.media_kind,
+        extractionStatus: result.analysis?.extraction_status,
+        analysisSummary:
+          typeof result.analysis?.summary_json?.summary === "string"
+            ? result.analysis.summary_json.summary
+            : undefined,
+        aiArtifactBlob: result.analysis?.walrus_blob_id,
         timestamp: result.evidence.created_at,
       });
       setFile(null);
@@ -431,11 +442,15 @@ export default function EvidenceUploadPage() {
                   <div className="rounded-lg border border-border/70 bg-secondary/35 p-3 min-h-[126px]">
                     <div className="flex items-center justify-between gap-2">
                       <BrainCircuit className="w-4 h-4 text-accent-yellow" />
-                      <Badge variant="pending" className="text-[9px]">Ready</Badge>
+                      <Badge variant={receipt.extractionStatus === "extracted" ? "verified" : "pending"} className="text-[9px]">
+                        {receipt.extractionStatus || "Queued"}
+                      </Badge>
                     </div>
                     <p className="mt-3 text-xs font-bold text-white">DeepSeek Layer</p>
                     <p className="mt-1 text-[10px] text-zinc-500 leading-relaxed">
-                      The case can now generate timeline, report, and relationship graph artifacts.
+                      {receipt.mediaKind
+                        ? `${receipt.mediaKind} intelligence extracted for timeline, report, and graph artifacts.`
+                        : "The case can now generate timeline, report, and relationship graph artifacts."}
                     </p>
                     <Link href="/dashboard/graph" className="mt-2 inline-flex text-[10px] font-bold text-accent-blue hover:text-white">
                       Open graph workspace
@@ -443,8 +458,27 @@ export default function EvidenceUploadPage() {
                   </div>
                 </div>
 
+                {(receipt.analysisSummary || receipt.aiArtifactBlob) && (
+                  <div className="mt-4 rounded-lg border border-accent-yellow/20 bg-accent-yellow/5 p-3">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-accent-yellow">AI Evidence Intelligence</p>
+                        {receipt.analysisSummary && (
+                          <p className="mt-1 text-xs leading-relaxed text-zinc-300">{receipt.analysisSummary}</p>
+                        )}
+                      </div>
+                      {receipt.aiArtifactBlob && (
+                        <div className="md:max-w-[260px]">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">AI Artifact Walrus Blob</p>
+                          <p className="mt-1 break-all font-mono text-[9px] text-zinc-400">{receipt.aiArtifactBlob}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="mt-4 rounded-lg border border-border/70 bg-black/60 p-3 font-mono text-[9px] text-zinc-400">
-                  DEMO_READOUT: TATUM_DATA_API={"job:"}{receipt.walrusJobId || "pending"} | WALRUS_BLOB={receipt.walrusBlob} | SUI_TX={receipt.suiTx || "pending"} | DEEPSEEK_ARTIFACTS=ready
+                  DEMO_READOUT: TATUM_DATA_API={"job:"}{receipt.walrusJobId || "pending"} | WALRUS_BLOB={receipt.walrusBlob} | SUI_TX={receipt.suiTx || "pending"} | DEEPSEEK_ANALYSIS={receipt.extractionStatus || "pending"}
                 </div>
               </div>
 

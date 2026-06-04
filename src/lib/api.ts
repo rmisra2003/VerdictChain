@@ -52,6 +52,7 @@ export interface ProofRecord {
 export interface EvidenceUploadApiResponse {
   evidence: EvidenceRecord;
   proof?: ProofRecord | null;
+  analysis?: EvidenceAnalysisRecord | null;
   walrus_metadata: {
     provider?: string;
     blob_id?: string;
@@ -60,6 +61,22 @@ export interface EvidenceUploadApiResponse {
     raw?: Record<string, unknown>;
   };
   message: string;
+}
+
+export interface EvidenceAnalysisRecord {
+  id: string;
+  case_id: string;
+  evidence_id: string;
+  media_kind: string;
+  extraction_status: string;
+  extracted_text?: string | null;
+  text_excerpt?: string | null;
+  summary_json: Record<string, unknown>;
+  entities_json: Record<string, unknown>;
+  extraction_metadata: Record<string, unknown>;
+  walrus_blob_id?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TimelineRecord {

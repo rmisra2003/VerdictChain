@@ -51,7 +51,11 @@ class Settings(BaseSettings):
     # ── DeepSeek AI ─────────────────────────────────────────────────────
     DEEPSEEK_API_KEY: str = "your-deepseek-api-key"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
-    DEEPSEEK_MODEL: str = "deepseek-chat"
+    DEEPSEEK_MODEL: str = "deepseek-v4-flash"
+
+    # ── Optional Media Extraction Providers ─────────────────────────────
+    AUDIO_TRANSCRIPTION_PROVIDER: str = "none"  # none | deepgram
+    DEEPGRAM_API_KEY: str = ""
 
     # ── Server ──────────────────────────────────────────────────────────
     HOST: str = "0.0.0.0"

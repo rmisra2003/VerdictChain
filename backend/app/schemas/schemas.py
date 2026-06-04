@@ -106,11 +106,32 @@ class EvidenceResponse(BaseModel):
     created_at: datetime
 
 
+class EvidenceAnalysisResponse(BaseModel):
+    """Schema for extracted evidence intelligence returned by the API."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    case_id: uuid.UUID
+    evidence_id: uuid.UUID
+    media_kind: str
+    extraction_status: str
+    extracted_text: Optional[str] = None
+    text_excerpt: Optional[str] = None
+    summary_json: Dict[str, Any] = Field(default_factory=dict)
+    entities_json: Dict[str, Any] = Field(default_factory=dict)
+    extraction_metadata: Dict[str, Any] = Field(default_factory=dict)
+    walrus_blob_id: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class EvidenceUploadResponse(BaseModel):
     """Schema returned after a successful evidence upload."""
 
     evidence: EvidenceResponse
     proof: Optional[ProofResponse] = None
+    analysis: Optional[EvidenceAnalysisResponse] = None
     walrus_metadata: Dict[str, Any] = Field(default_factory=dict)
     message: str = "Evidence uploaded successfully"
 

@@ -12,6 +12,7 @@ from app.models.models import (
     AuditLog,
     CaseVault,
     Evidence,
+    EvidenceAnalysis,
     GraphSnapshot,
     InvestigationReport,
     Proof,
@@ -167,6 +168,49 @@ class EvidenceRepository(GenericRepository[Evidence]):
         return result.scalars().first()
 
 
+# ── Evidence Analysis ──────────────────────────────────────────────────────
+
+
+class EvidenceAnalysisRepository(GenericRepository[EvidenceAnalysis]):
+    """Repository with media-intelligence-specific queries."""
+
+    async def get_by_evidence(
+        self, db: AsyncSession, evidence_id: uuid.UUID
+    ) -> Optional[EvidenceAnalysis]:
+        """Return the analysis record for one evidence item."""
+        result = await db.execute(
+            select(self.model).where(self.model.evidence_id == evidence_id)
+        )
+        return result.scalars().first()
+
+    async def get_by_case(
+        self, db: AsyncSession, case_id: uuid.UUID
+    ) -> List[EvidenceAnalysis]:
+        """Return all analysis records for a case."""
+        result = await db.execute(
+            select(self.model)
+            .where(self.model.case_id == case_id)
+            .order_by(desc(self.model.created_at))
+        )
+        return list(result.scalars().all())
+
+    async def create_or_update_for_evidence(
+        self,
+        db: AsyncSession,
+        evidence_id: uuid.UUID,
+        obj_data: dict[str, Any],
+    ) -> EvidenceAnalysis:
+        """Create or update the single analysis row for an evidence item."""
+        existing = await self.get_by_evidence(db, evidence_id)
+        if existing is None:
+            return await self.create(db, obj_data)
+        for key, value in obj_data.items():
+            setattr(existing, key, value)
+        await db.flush()
+        await db.refresh(existing)
+        return existing
+
+
 # ── Proof ───────────────────────────────────────────────────────────────────
 
 
@@ -304,6 +348,7 @@ class AuditLogRepository(GenericRepository[AuditLog]):
 user_repo = UserRepository(User)
 case_repo = CaseRepository(CaseVault)
 evidence_repo = EvidenceRepository(Evidence)
+evidence_analysis_repo = EvidenceAnalysisRepository(EvidenceAnalysis)
 proof_repo = ProofRepository(Proof)
 timeline_repo = TimelineRepository(Timeline)
 report_repo = ReportRepository(InvestigationReport)

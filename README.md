@@ -58,7 +58,7 @@ VerdictChain combines:
 6. Show that the original file verifies successfully.
 7. Modify one character in the file and verify again.
 8. Show that the modified file fails verification.
-9. Open the case workspace and generate DeepSeek timeline, report, and graph artifacts.
+9. Open the case workspace and generate DeepSeek timeline, report, and graph artifacts from extracted evidence intelligence.
 
 ## Recommended Demo Evidence
 
@@ -111,14 +111,18 @@ The backend computes the SHA-256 hash for every uploaded file and calls the nota
 
 ### DeepSeek
 
-DeepSeek powers the investigation intelligence layer:
+DeepSeek powers the investigation intelligence layer after VerdictChain extracts readable signals from each upload:
 
+- Direct text extraction from `.txt`, `.json`, `.csv`, and spreadsheet uploads.
+- PDF text extraction for selectable PDF content.
+- Image OCR when the Tesseract runtime is available.
+- Optional audio transcription through a configured provider before DeepSeek analysis.
 - Entity extraction from decoded evidence text.
 - Case timelines from evidence metadata.
 - Investigation reports with findings, risk assessment, and recommendations.
 - Relationship graph snapshots for link analysis.
 
-These generated artifacts make the app more than a storage demo: VerdictChain becomes an investigation workspace on top of cryptographic custody records.
+These generated artifacts make the app more than a storage demo: VerdictChain becomes an investigation workspace on top of cryptographic custody records. The graph always includes the custody trail (`Evidence -> SHA-256 -> Walrus -> Sui -> DeepSeek`) and then layers extracted people, organizations, amounts, dates, locations, and risk flags on top.
 
 ## Architecture
 
@@ -264,7 +268,10 @@ TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
 
 DEEPSEEK_API_KEY=your-deepseek-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-v4-flash
+
+AUDIO_TRANSCRIPTION_PROVIDER=none
+DEEPGRAM_API_KEY=
 
 CORS_ORIGINS=["http://localhost:3000","https://your-frontend.vercel.app"]
 ```

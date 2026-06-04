@@ -15,6 +15,7 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
     func,
 )
@@ -95,6 +96,9 @@ class CaseVault(Base):
         "Evidence", back_populates="case", lazy="selectin",
         cascade="all, delete-orphan",
     )
+    evidence_analyses: Mapped[List[EvidenceAnalysis]] = relationship(
+        "EvidenceAnalysis", back_populates="case", lazy="selectin",
+    )
     proofs: Mapped[List[Proof]] = relationship(
         "Proof", back_populates="case", lazy="selectin",
         cascade="all, delete-orphan",
@@ -164,6 +168,10 @@ class Evidence(Base):
         "Proof", back_populates="evidence", lazy="selectin",
         cascade="all, delete-orphan",
     )
+    analysis: Mapped[Optional[EvidenceAnalysis]] = relationship(
+        "EvidenceAnalysis", back_populates="evidence", lazy="selectin",
+        cascade="all, delete-orphan", uselist=False, single_parent=True,
+    )
 
     __table_args__ = (
         Index("ix_evidence_case_id", "case_id"),
@@ -178,7 +186,68 @@ class Evidence(Base):
 
 
 # ---------------------------------------------------------------------------
-# 4. Proof
+# 4. EvidenceAnalysis
+# ---------------------------------------------------------------------------
+class EvidenceAnalysis(Base):
+    """Extracted media intelligence and DeepSeek analysis for evidence."""
+
+    __tablename__ = "evidence_analyses"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid.uuid4
+    )
+    case_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("case_vaults.id", ondelete="CASCADE"), nullable=False
+    )
+    evidence_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("evidence.id", ondelete="CASCADE"), nullable=False
+    )
+    media_kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    extraction_status: Mapped[str] = mapped_column(
+        String(40), default="pending", nullable=False
+    )
+    extracted_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    text_excerpt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    summary_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    entities_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    extraction_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    walrus_blob_id: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # ── Relationships ──────────────────────────────────────────────────
+    case: Mapped[CaseVault] = relationship(
+        "CaseVault", back_populates="evidence_analyses", lazy="selectin"
+    )
+    evidence: Mapped[Evidence] = relationship(
+        "Evidence", back_populates="analysis", lazy="selectin"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("evidence_id", name="uq_evidence_analyses_evidence_id"),
+        Index("ix_evidence_analyses_case_id", "case_id"),
+        Index("ix_evidence_analyses_evidence_id", "evidence_id"),
+        Index("ix_evidence_analyses_media_kind", "media_kind"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<EvidenceAnalysis id={self.id!s} evidence_id={self.evidence_id!s} "
+            f"media_kind={self.media_kind!r}>"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 5. Proof
 # ---------------------------------------------------------------------------
 class Proof(Base):
     """On-chain proof record linking evidence to a blockchain transaction."""
@@ -226,7 +295,7 @@ class Proof(Base):
 
 
 # ---------------------------------------------------------------------------
-# 5. Timeline
+# 6. Timeline
 # ---------------------------------------------------------------------------
 class Timeline(Base):
     """AI-generated chronological timeline for a case."""
@@ -261,7 +330,7 @@ class Timeline(Base):
 
 
 # ---------------------------------------------------------------------------
-# 6. InvestigationReport
+# 7. InvestigationReport
 # ---------------------------------------------------------------------------
 class InvestigationReport(Base):
     """AI-generated investigation report for a case."""
@@ -296,7 +365,7 @@ class InvestigationReport(Base):
 
 
 # ---------------------------------------------------------------------------
-# 7. GraphSnapshot
+# 8. GraphSnapshot
 # ---------------------------------------------------------------------------
 class GraphSnapshot(Base):
     """AI-generated relationship graph snapshot for a case."""
@@ -331,7 +400,7 @@ class GraphSnapshot(Base):
 
 
 # ---------------------------------------------------------------------------
-# 8. AuditLog
+# 9. AuditLog
 # ---------------------------------------------------------------------------
 class AuditLog(Base):
     """Immutable audit trail entry for any significant platform action."""

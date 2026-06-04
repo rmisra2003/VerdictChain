@@ -127,6 +127,47 @@ class DeepSeekService:
         result = await self._chat_json(system_prompt, user_prompt)
         return result  # type: ignore[return-value]
 
+    async def analyze_evidence(
+        self,
+        *,
+        filename: str,
+        content_type: str,
+        sha256_hash: str,
+        extracted_text: str,
+        extraction_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Summarize one evidence artifact into graph/report-ready JSON."""
+        self._ensure_configured()
+
+        system_prompt = (
+            "You are a forensic evidence-intelligence analyst. Convert the "
+            "provided extracted evidence text and metadata into concise, "
+            "courtroom-friendly structured JSON. If the text is sparse or "
+            "metadata-only, say that explicitly and avoid inventing facts. "
+            "Respond ONLY with valid JSON.\n\n"
+            "JSON schema:\n"
+            '{"summary": str,\n'
+            ' "key_observations": [str],\n'
+            ' "people": [{"name": str, "role": str, "confidence": float}],\n'
+            ' "organizations": [{"name": str, "type": str, "confidence": float}],\n'
+            ' "amounts": [{"value": str, "currency": str, "context": str}],\n'
+            ' "dates": [{"date": str, "context": str}],\n'
+            ' "locations": [{"name": str, "context": str}],\n'
+            ' "relationships": [{"from": str, "to": str, "type": str, "evidence": str}],\n'
+            ' "risk_flags": [{"flag": str, "severity": "low"|"medium"|"high"|"critical", "rationale": str}],\n'
+            ' "recommended_next_steps": [str],\n'
+            ' "confidence": float}'
+        )
+        user_prompt = (
+            f"Filename: {filename}\n"
+            f"Content type: {content_type}\n"
+            f"SHA-256: {sha256_hash}\n"
+            f"Extraction metadata:\n{json.dumps(extraction_metadata, default=str)}\n\n"
+            f"Extracted evidence text:\n{extracted_text or '[No extracted text available]'}"
+        )
+        result = await self._chat_json(system_prompt, user_prompt, max_tokens=4096)
+        return result if isinstance(result, dict) else {"summary": "", "items": result}
+
     # ------------------------------------------------------------------
     # Summarisation
     # ------------------------------------------------------------------
