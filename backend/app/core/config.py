@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     SUI_CLI_ENABLED: bool = False
     SUI_CLI_PATH: str = "sui"
     SUI_GAS_BUDGET: int = 10000000
+    SUI_CLI_TIMEOUT_SECONDS: int = 25
 
     # ── Tatum ───────────────────────────────────────────────────────────
     TATUM_API_KEY: str = "your-tatum-api-key"

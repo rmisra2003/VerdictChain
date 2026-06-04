@@ -32,6 +32,7 @@ class SuiService:
         self._function: str = settings.SUI_NOTARY_FUNCTION
         self._cli_path: str = settings.SUI_CLI_PATH
         self._gas_budget: int = settings.SUI_GAS_BUDGET
+        self._cli_timeout: int = settings.SUI_CLI_TIMEOUT_SECONDS
 
     # ------------------------------------------------------------------
     # Helpers
@@ -53,7 +54,10 @@ class SuiService:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        stdout, stderr = await process.communicate()
+        stdout, stderr = await self._communicate_with_timeout(
+            process,
+            f"sui {' '.join(args)}",
+        )
         if process.returncode != 0:
             raise RuntimeError(
                 f"sui {' '.join(args)} failed: {stderr.decode(errors='replace').strip()}"
@@ -74,7 +78,10 @@ class SuiService:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        stdout, _stderr = await process.communicate()
+        stdout, _stderr = await self._communicate_with_timeout(
+            process,
+            "sui client active-env",
+        )
         current_env = stdout.decode(errors="replace").strip()
         if current_env == self._network:
             return
@@ -88,12 +95,27 @@ class SuiService:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        _stdout, stderr = await switch.communicate()
+        _stdout, stderr = await self._communicate_with_timeout(
+            switch,
+            f"sui client switch --env {self._network}",
+        )
         if switch.returncode != 0:
             raise RuntimeError(
                 f"Failed to switch Sui CLI to {self._network}: "
                 f"{stderr.decode(errors='replace').strip()}"
             )
+
+    async def _communicate_with_timeout(
+        self,
+        process: asyncio.subprocess.Process,
+        label: str,
+    ) -> tuple[bytes, bytes]:
+        try:
+            return await asyncio.wait_for(process.communicate(), timeout=self._cli_timeout)
+        except asyncio.TimeoutError as exc:
+            process.kill()
+            await process.wait()
+            raise RuntimeError(f"{label} timed out after {self._cli_timeout}s") from exc
 
     async def _create_proof_with_cli(
         self,
