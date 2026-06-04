@@ -71,6 +71,9 @@ export default function CaseVaultList() {
       return matchesSearch && matchesStatus;
     });
   }, [cases, search, statusFilter]);
+  const hasFilters = search.trim().length > 0 || statusFilter !== "all";
+  const isEmptyAccount = !loading && !errorMessage && cases.length === 0;
+  const shouldShowCreate = showCreate || isEmptyAccount;
 
   const submitCase = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -99,9 +102,14 @@ export default function CaseVaultList() {
           </h1>
           <p className="text-xs text-zinc-500 mt-1">Manage live case records backed by the VerdictChain API.</p>
         </div>
-        <Button variant="primary" size="sm" className="gap-2" onClick={() => setShowCreate((value) => !value)}>
+        <Button
+          variant="primary"
+          size="sm"
+          className="gap-2"
+          onClick={() => setShowCreate((value) => !value)}
+        >
           <Plus className="w-4 h-4" />
-          New Case
+          {shouldShowCreate && !isEmptyAccount ? "Hide Form" : "New Case"}
         </Button>
       </div>
 
@@ -111,8 +119,13 @@ export default function CaseVaultList() {
         </Card>
       )}
 
-      {showCreate && (
+      {shouldShowCreate && (
         <Card variant="glass" className="p-5">
+          {isEmptyAccount && (
+            <div className="mb-4 rounded-lg border border-accent-blue/25 bg-accent-blue/10 p-3 text-xs text-zinc-300">
+              Create your first case vault to unlock evidence ingestion, Walrus storage receipts, and Sui proof verification.
+            </div>
+          )}
           <form onSubmit={submitCase} className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             <div className="lg:col-span-4 space-y-1.5">
               <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Case Title</label>
@@ -238,8 +251,20 @@ export default function CaseVaultList() {
       {!loading && filteredCases.length === 0 && (
         <Card variant="glass" className="p-12 text-center text-zinc-500">
           <Briefcase className="w-12 h-12 mx-auto text-zinc-600 mb-4" />
-          <h3 className="font-bold text-white text-base">No Cases Found</h3>
-          <p className="text-xs text-zinc-500 mt-1">Create a case or adjust your filters.</p>
+          <h3 className="font-bold text-white text-base">
+            {hasFilters ? "No Matching Cases" : "No Case Vaults Yet"}
+          </h3>
+          <p className="text-xs text-zinc-500 mt-1">
+            {hasFilters
+              ? "Adjust the search or status filter to find an existing case vault."
+              : "Create your first case vault above before ingesting evidence."}
+          </p>
+          {!hasFilters && !shouldShowCreate && (
+            <Button variant="primary" size="sm" className="mt-4 gap-2" onClick={() => setShowCreate(true)}>
+              <Plus className="w-4 h-4" />
+              Create Case Vault
+            </Button>
+          )}
         </Card>
       )}
     </div>
