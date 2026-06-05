@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import enforce_ai_rate_limit
 from app.api.deps import get_current_user
 from app.repositories.repository import case_repo, evidence_analysis_repo, evidence_repo, timeline_repo
 from app.schemas.schemas import TimelineResponse
@@ -20,6 +21,7 @@ router = APIRouter(prefix="/timeline", tags=["Timeline"])
 
 @router.post("/generate", response_model=TimelineResponse, status_code=status.HTTP_201_CREATED)
 async def generate_timeline(
+    request: Request,
     case_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -28,6 +30,7 @@ async def generate_timeline(
     case = await case_repo.get_by_id(db, case_id)
     if case is None or case.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+    await enforce_ai_rate_limit(request, current_user.id)
 
     evidences = await evidence_repo.get_by_case(db, case_id)
     analyses = await evidence_analysis_repo.get_by_case(db, case_id)

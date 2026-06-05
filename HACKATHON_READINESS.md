@@ -7,6 +7,7 @@ VerdictChain is now prepared for a Tatum x Walrus hackathon deployment path.
 - Tatum API key for Walrus storage plus a funded Sui devnet CLI address.
 - Tatum Walrus storage API access.
 - DeepSeek API key.
+- OpenAI API key for image understanding and audio transcription.
 - PostgreSQL database for the FastAPI backend.
 - Frontend host such as Vercel.
 - Backend host such as Render, Railway, Fly, or a Docker host.
@@ -29,6 +30,9 @@ TATUM_API_KEY=...
 TATUM_API_URL=https://api.tatum.io
 TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
 DEEPSEEK_API_KEY=...
+OPENAI_API_KEY=...
+AI_RATE_LIMIT_MAX_REQUESTS=8
+AI_RATE_LIMIT_WINDOW_SECONDS=60
 CORS_ORIGINS=["https://your-frontend.vercel.app"]
 ```
 
@@ -69,6 +73,7 @@ NEXT_PUBLIC_API_BASE_URL=https://your-backend-domain.com
 6. Open `/verify`.
 7. Upload the same file and verify the SHA-256 fingerprint through the backend.
 8. Open the created case workspace and generate the DeepSeek timeline/report/graph artifacts.
+9. For the media demo, upload a readable image or short audio clip and show OpenAI-extracted text/transcript inside the evidence detail panel.
 
 ## Video Script
 
@@ -78,7 +83,8 @@ NEXT_PUBLIC_API_BASE_URL=https://your-backend-domain.com
 4. Show the backend-backed Walrus/Tatum receipt.
 5. Verify the same file publicly.
 6. Generate AI report/timeline/graph as the forensic workspace layer powered by DeepSeek.
-7. Close with the stack: Next.js, FastAPI, PostgreSQL, Sui devnet notary, Tatum Walrus storage, DeepSeek.
+7. Show that media extraction uses OpenAI for images/audio before DeepSeek forensic analysis.
+8. Close with the stack: Next.js, FastAPI, PostgreSQL, Sui devnet notary, Tatum Walrus storage, OpenAI media extraction, DeepSeek reasoning.
 
 ## Known Limits
 

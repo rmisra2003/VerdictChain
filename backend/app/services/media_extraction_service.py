@@ -16,6 +16,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.services.openai_media_service import openai_media_service
+
 logger = logging.getLogger(__name__)
 
 MAX_EXTRACTED_CHARS = 30000
@@ -84,8 +86,22 @@ class MediaExtractionService:
                 return ExtractionResult(media_kind, status, text, metadata, warnings)
 
             if media_kind == "image":
-                text, image_meta, warnings = await asyncio.to_thread(self._extract_image_ocr, file_data)
+                text, image_meta, warnings = await self._extract_image(
+                    file_data,
+                    normalized_type,
+                    filename,
+                )
                 metadata.update(image_meta)
+                status = "extracted" if text.strip() else "metadata_only"
+                return ExtractionResult(media_kind, status, text, metadata, warnings)
+
+            if media_kind == "audio":
+                text, audio_meta, warnings = await openai_media_service.transcribe_audio(
+                    file_data,
+                    normalized_type,
+                    filename,
+                )
+                metadata.update(audio_meta)
                 status = "extracted" if text.strip() else "metadata_only"
                 return ExtractionResult(media_kind, status, text, metadata, warnings)
 
@@ -137,6 +153,8 @@ class MediaExtractionService:
             return "pdf"
         if content_type.startswith("image/") or suffix in {"png", "jpg", "jpeg", "webp"}:
             return "image"
+        if content_type.startswith("audio/") or suffix in {"wav", "mp3", "mpga", "m4a", "aac", "flac", "ogg"}:
+            return "audio"
         if content_type.startswith("video/") or suffix in {"mp4", "mov", "mkv", "webm"}:
             return "video"
         if suffix in {"xlsx", "xlsm"}:
@@ -190,6 +208,32 @@ class MediaExtractionService:
                 if any(cell.strip() for cell in values):
                     parts.append(" | ".join(values))
         return self._limit("\n".join(parts))
+
+    async def _extract_image(
+        self,
+        file_data: bytes,
+        content_type: str,
+        filename: str,
+    ) -> tuple[str, dict[str, Any], list[str]]:
+        ocr_text, metadata, warnings = await asyncio.to_thread(self._extract_image_ocr, file_data)
+        vision_text, vision_meta, vision_warnings = await openai_media_service.analyze_image(
+            file_data,
+            content_type,
+            filename,
+        )
+        metadata.update(vision_meta)
+        warnings.extend(vision_warnings)
+
+        parts: list[str] = []
+        if ocr_text.strip():
+            parts.append(f"[Local OCR]\n{ocr_text.strip()}")
+        if vision_text.strip():
+            parts.append(f"[OpenAI Vision]\n{vision_text.strip()}")
+
+        combined_text = self._limit("\n\n".join(parts))
+        if not combined_text and not warnings:
+            warnings.append("No readable image text or visual summary was extracted.")
+        return combined_text, metadata, warnings
 
     def _extract_image_ocr(self, file_data: bytes) -> tuple[str, dict[str, Any], list[str]]:
         warnings: list[str] = []

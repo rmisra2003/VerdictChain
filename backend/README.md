@@ -102,6 +102,18 @@ DEEPSEEK_API_KEY=your-deepseek-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
 
+# OpenAI media extraction
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_VISION_MODEL=gpt-4.1-mini
+OPENAI_AUDIO_MODEL=gpt-4o-mini-transcribe
+OPENAI_VISION_MAX_OUTPUT_TOKENS=1200
+OPENAI_AUDIO_MAX_FILE_SIZE_MB=25
+
+# AI Rate Limits
+AI_RATE_LIMIT_MAX_REQUESTS=8
+AI_RATE_LIMIT_WINDOW_SECONDS=60
+
 # Media extraction
 # Image OCR uses local Tesseract. The Docker image installs tesseract-ocr
 # and tesseract-ocr-eng for PNG/JPEG/WebP evidence analysis.
@@ -114,7 +126,7 @@ CORS_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
 
 # Security Rules
 MAX_FILE_SIZE_MB=50
-ALLOWED_MIME_TYPES=application/pdf,image/png,image/jpeg,image/webp,video/mp4,text/plain,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+ALLOWED_MIME_TYPES=application/pdf,image/png,image/jpeg,image/webp,video/mp4,audio/wav,audio/x-wav,audio/mpeg,audio/mpga,audio/mp4,audio/x-m4a,audio/aac,audio/webm,audio/ogg,audio/flac,text/plain,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 ```
 
 > Production guardrail: `TATUM_API_KEY` and `DEEPSEEK_API_KEY` are required for live storage/RPC/AI paths. Placeholder keys fail closed.

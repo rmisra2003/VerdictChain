@@ -106,7 +106,7 @@ class EvidenceIntelligenceService:
             ),
             "key_observations": [
                 "Raw file hash and storage proof are available for verification.",
-                "DeepSeek analysis will become richer when readable text or transcript data is available.",
+                "DeepSeek analysis becomes richer when OpenAI/Tesseract media extraction returns readable text or transcript data.",
             ],
             "people": [],
             "organizations": [],
@@ -117,7 +117,7 @@ class EvidenceIntelligenceService:
             "risk_flags": [],
             "recommended_next_steps": [
                 "Verify the SHA-256 fingerprint from the public verifier.",
-                "Upload text-rich evidence or configure OCR/transcription providers for richer analysis.",
+                "Upload text-rich evidence, readable images, or short audio clips for richer analysis.",
             ],
             "confidence": 0.35 if extraction_status == "metadata_only" else 0.55,
             "sha256_hash": sha256_hash,

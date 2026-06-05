@@ -356,8 +356,17 @@ export async function uploadEvidenceToApi(
   }
 
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Evidence upload failed (${response.status}): ${detail}`);
+    const rawDetail = await response.text();
+    let detail = rawDetail;
+    try {
+      const parsed = JSON.parse(rawDetail) as { detail?: unknown };
+      if (typeof parsed.detail === "string") {
+        detail = parsed.detail;
+      }
+    } catch {
+      // Keep raw text when the backend does not return JSON.
+    }
+    throw new ApiError(detail || `Evidence upload failed (${response.status}).`, response.status);
   }
 
   return (await response.json()) as EvidenceUploadApiResponse;

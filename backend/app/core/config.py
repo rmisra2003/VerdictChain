@@ -54,6 +54,18 @@ class Settings(BaseSettings):
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     DEEPSEEK_MODEL: str = "deepseek-v4-flash"
 
+    # ── OpenAI Media Extraction ─────────────────────────────────────────
+    OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    OPENAI_VISION_MODEL: str = "gpt-4.1-mini"
+    OPENAI_AUDIO_MODEL: str = "gpt-4o-mini-transcribe"
+    OPENAI_VISION_MAX_OUTPUT_TOKENS: int = 1200
+    OPENAI_AUDIO_MAX_FILE_SIZE_MB: int = 25
+
+    # ── AI Rate Limiting ────────────────────────────────────────────────
+    AI_RATE_LIMIT_MAX_REQUESTS: int = 8
+    AI_RATE_LIMIT_WINDOW_SECONDS: int = 60
+
     # ── Server ──────────────────────────────────────────────────────────
     HOST: str = "0.0.0.0"
     PORT: int = 8000
@@ -64,6 +76,8 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 50
     ALLOWED_MIME_TYPES: str = (
         "application/pdf,image/png,image/jpeg,image/webp,video/mp4,"
+        "audio/wav,audio/x-wav,audio/mpeg,audio/mpga,audio/mp4,audio/x-m4a,"
+        "audio/aac,audio/webm,audio/ogg,audio/flac,"
         "text/plain,text/csv,application/json,"
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )

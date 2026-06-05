@@ -39,6 +39,7 @@ VerdictChain combines:
 - **Walrus** for decentralized evidence artifact storage.
 - **Tatum Sui RPC** for Sui transaction verification through Tatum's RPC gateway.
 - **Sui Move** for tamper-evident notary proof transactions.
+- **OpenAI** for image understanding and audio transcription before forensic summarization.
 - **DeepSeek** for AI-generated investigation reports, timelines, entity extraction, and graph intelligence.
 - **FastAPI + PostgreSQL** for authenticated case vaults, proof metadata, evidence records, and audit logs.
 - **Next.js** for the investigator console and public verification experience.
@@ -62,7 +63,7 @@ VerdictChain combines:
 
 ## Recommended Demo Evidence
 
-Use synthetic evidence, not private documents. A small `.txt`, `.json`, `.csv`, `.pdf`, or readable `.png`/`.jpg`/`.webp` screenshot works best because it uploads quickly and makes the hash test easy to repeat.
+Use synthetic evidence, not private documents. A small `.txt`, `.json`, `.csv`, `.pdf`, readable `.png`/`.jpg`/`.webp` screenshot, or short `.wav`/`.mp3` clip works best because it uploads quickly and makes the hash test easy to repeat.
 
 Example `.txt` file:
 
@@ -115,13 +116,16 @@ DeepSeek powers the investigation intelligence layer after VerdictChain extracts
 
 - Direct text extraction from `.txt`, `.json`, `.csv`, and spreadsheet uploads.
 - PDF text extraction for selectable PDF content.
-- Image OCR through the Tesseract runtime included in the production backend image.
+- Image OCR through the Tesseract runtime, augmented by OpenAI vision when configured.
+- Audio transcription through OpenAI before DeepSeek forensic summarization.
 - Entity extraction from decoded evidence text.
 - Case timelines from evidence metadata.
 - Investigation reports with findings, risk assessment, and recommendations.
 - Relationship graph snapshots for link analysis.
 
 These generated artifacts make the app more than a storage demo: VerdictChain becomes an investigation workspace on top of cryptographic custody records. The graph always includes the custody trail (`Evidence -> SHA-256 -> Walrus -> Sui -> DeepSeek`) and then layers extracted people, organizations, amounts, dates, locations, and risk flags on top.
+
+OpenAI is used only for media decoding tasks where it is strongest: image understanding and speech-to-text. DeepSeek remains the forensic reasoning layer that turns extracted media signals into case summaries, entities, timelines, reports, and graph artifacts.
 
 ## Architecture
 
@@ -134,6 +138,7 @@ flowchart LR
   B --> F["Sui CLI Signer"]
   F --> G["Sui Devnet Notary Package"]
   B --> J["Tatum Sui Devnet RPC"]
+  B --> K["OpenAI Media Extraction"]
   B --> H["DeepSeek API"]
   I["Public Verifier"] --> B
 ```
@@ -269,6 +274,16 @@ TATUM_RPC_URL=https://sui-devnet.gateway.tatum.io
 DEEPSEEK_API_KEY=your-deepseek-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
+
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_VISION_MODEL=gpt-4.1-mini
+OPENAI_AUDIO_MODEL=gpt-4o-mini-transcribe
+OPENAI_VISION_MAX_OUTPUT_TOKENS=1200
+OPENAI_AUDIO_MAX_FILE_SIZE_MB=25
+
+AI_RATE_LIMIT_MAX_REQUESTS=8
+AI_RATE_LIMIT_WINDOW_SECONDS=60
 
 CORS_ORIGINS=["http://localhost:3000","https://your-frontend.vercel.app"]
 ```

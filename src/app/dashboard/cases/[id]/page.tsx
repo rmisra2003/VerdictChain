@@ -354,7 +354,7 @@ export default function CaseWorkspace() {
                               AI Evidence Intelligence
                             </div>
                             <p className="mt-2 text-xs leading-relaxed text-zinc-300">
-                              {selectedAnalysis ? selectedSummary : "No DeepSeek analysis exists for this evidence yet. Uploads created after the intelligence pipeline was enabled will include OCR/text extraction and summary artifacts."}
+                              {selectedAnalysis ? selectedSummary : "No DeepSeek analysis exists for this evidence yet. New uploads include OpenAI/Tesseract media extraction and summary artifacts."}
                             </p>
                           </div>
                           <Badge variant={selectedAnalysis?.extraction_status === "extracted" ? "verified" : "pending"} className="shrink-0">

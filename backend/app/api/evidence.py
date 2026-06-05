@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, BackgroundTasks, Form
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, BackgroundTasks, Form, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import enforce_ai_rate_limit
 from app.api.deps import get_current_user
 from app.repositories.repository import case_repo, evidence_repo, evidence_analysis_repo, proof_repo
 from app.schemas.schemas import (
@@ -45,6 +46,7 @@ async def _run_ai_processing(case_id: UUID, evidence_id: UUID, file_content: str
 
 @router.post("/upload", response_model=EvidenceUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_evidence(
+    request: Request,
     background_tasks: BackgroundTasks,
     case_id: UUID = Form(...),
     file: UploadFile = File(...),
@@ -65,6 +67,7 @@ async def upload_evidence(
     case = await case_repo.get_by_id(db, case_id)
     if case is None or case.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+    await enforce_ai_rate_limit(request, current_user.id)
 
     # ── 1. Validate MIME type ───────────────────────────────────────────
     content_type = file.content_type or "application/octet-stream"
