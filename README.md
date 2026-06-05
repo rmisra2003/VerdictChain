@@ -90,7 +90,7 @@ VerdictChain uses Tatum in two ways:
 - **Walrus Data API path**: evidence uploads are sent through the Tatum-backed Walrus storage provider. The upload receipt surfaces the returned job id, blob id, provider metadata, and status.
 - **Sui RPC path**: proof verification routes through the configured Tatum Sui RPC gateway, currently `https://sui-devnet.gateway.tatum.io`.
 
-Tatum is intentionally visible in the product. The upload receipt includes a **Tatum Data API** card and a **Refresh Tatum Job** action so judges can see the integration working in the UI.
+Tatum is intentionally visible in the product. The upload receipt includes a **Tatum Data API** card and a **Refresh Tatum Job** action so investigators can inspect the storage job lifecycle directly in the UI.
 
 ### Walrus
 
@@ -309,16 +309,6 @@ Mainnet deploy instructions:
 ```text
 sui/verdictchain_notary/DEPLOY_MAINNET.md
 ```
-
-## Hackathon Criteria Mapping
-
-| Criteria | How VerdictChain addresses it |
-| --- | --- |
-| Walrus and Tatum Integration | Evidence files are uploaded through Tatum-backed Walrus storage. The UI shows Tatum job ids, blob ids, certification state, and a refreshable Tatum job-status action. |
-| Technical Quality | The system has a split Next.js/FastAPI architecture, typed API client, SQLAlchemy models, JWT auth, Docker backend, and production deployment on Vercel/Railway. |
-| Successful Tatum Sui RPC Integration | Sui proof verification is routed through Tatum's Sui devnet RPC gateway. |
-| Creativity | VerdictChain combines cryptographic evidence custody with AI-assisted forensic timelines, reports, and relationship graphs. |
-| Presentation | The README, hackathon checklist, live demo, upload receipt, public verifier, and demo flow are designed for a clear judging walkthrough. |
 
 ## Verification Commands
 
