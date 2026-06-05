@@ -47,6 +47,15 @@ VerdictChain combines:
 
 ## What You Can Demo
 
+For a full recording walkthrough and social launch copy, see:
+
+```text
+DEMO_RECORDING_SCRIPT.md
+X_THREAD.md
+demo-assets/verdictchain-demo-evidence.txt
+demo-assets/verdictchain-demo-evidence-tampered.txt
+```
+
 1. Create an investigator account with email/password.
 2. Create a case vault.
 3. Upload a synthetic evidence file.

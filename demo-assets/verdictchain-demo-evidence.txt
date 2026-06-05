@@ -1,0 +1,10 @@
+Case: VC-DEMO-001
+Date: 2026-06-05
+Custodian: Demo Investigator
+Evidence: Suspicious payment transfer log
+Sender: Northbridge Holdings
+Receiver: Apex Recovery LLC
+Amount: $48,750
+Transaction Note: consulting retainer
+Observation: Payment appears one day before disputed contract signature.
+Review Note: This is synthetic demo evidence for VerdictChain.
