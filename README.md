@@ -13,6 +13,7 @@ The product is designed around a simple courtroom-grade question:
 ```text
 Frontend: https://verdictchain.vercel.app
 Backend:  https://api-production-0b30.up.railway.app
+How it works: https://verdictchain.vercel.app/how-it-works
 ```
 
 The current hackathon deployment is wired to a real Sui devnet notary package and a Railway-hosted FastAPI backend.

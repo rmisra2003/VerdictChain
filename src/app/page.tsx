@@ -76,7 +76,7 @@ export default function LandingPage() {
 
           <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-400 font-medium">
             <a href="#features" className="hover:text-foreground transition-colors">Platform Features</a>
-            <a href="#verification-flow" className="hover:text-foreground transition-colors">How it Works</a>
+            <Link href="/how-it-works" className="hover:text-foreground transition-colors">How it Works</Link>
             <a href="#architecture" className="hover:text-foreground transition-colors">Architecture</a>
             <Link href="/verify" className="hover:text-foreground transition-colors flex items-center gap-1">
               Verify Portal <ExternalLink className="w-3 h-3" />
@@ -148,6 +148,11 @@ export default function LandingPage() {
               <Link href="/verify" className="w-full sm:w-auto">
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto gap-2">
                   Verify Proof <CheckCircle className="w-5 h-5 text-accent-green" />
+                </Button>
+              </Link>
+              <Link href="/how-it-works" className="w-full sm:w-auto">
+                <Button variant="ghost" size="lg" className="w-full sm:w-auto gap-2">
+                  How It Works <ExternalLink className="w-4 h-4" />
                 </Button>
               </Link>
             </motion.div>
