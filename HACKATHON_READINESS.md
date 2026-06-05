@@ -60,8 +60,6 @@ NEXT_PUBLIC_API_BASE_URL=https://your-backend-domain.com
 
 ## Demo Flow
 
-For the complete recording script and sample files, use `DEMO_RECORDING_SCRIPT.md`.
-
 1. Open `/auth` and create or sign into an email account.
 2. Open `/dashboard/cases` and create a case vault.
 3. Open `/dashboard/upload`.

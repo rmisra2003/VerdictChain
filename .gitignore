@@ -32,6 +32,10 @@ venv/
 .DS_Store
 *.pem
 
+# local submission notes
+DEMO_RECORDING_SCRIPT.md
+X_THREAD.md
+
 # debug
 npm-debug.log*
 yarn-debug.log*
