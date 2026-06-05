@@ -327,7 +327,7 @@ sui move build --path sui/verdictchain_notary --build-env testnet --warnings-are
 - The current devnet sealing path uses the local Sui CLI signer. For a serious production launch, replace this with a hardened signer service, key management system, or sponsored transaction worker.
 - Tatum/Walrus certification can be asynchronous; upload responses include job and blob metadata for refreshable status checks.
 - Backend table creation is automatic for hackathon velocity. Use Alembic migrations before a serious production launch.
-- Rotate any API keys that were ever pasted into chat, shown in a screen recording, or shared in a public environment.
+
 
 ## License
 
