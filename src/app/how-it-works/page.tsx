@@ -31,62 +31,62 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
-  title: "How VerdictChain Works | Architecture and Service Map",
+  title: "How VerdictChain Works | Simple Product Walkthrough",
   description:
-    "A full architecture walkthrough of VerdictChain, including Tatum Walrus storage, Sui notary proofs, OpenAI media extraction, DeepSeek analysis, FastAPI, PostgreSQL, and Next.js.",
+    "A plain-English walkthrough of how VerdictChain stores evidence, proves file integrity, verifies changes, and uses AI to summarize cases.",
 };
 
 const custodyStages = [
   {
-    title: "1. Investigator Uploads Evidence",
+    title: "1. Upload a File",
     detail:
-      "The Next.js console sends the file, selected case id, and JWT session to the FastAPI backend. The backend validates MIME type and file size before any external service is called.",
-    result: "A controlled ingestion request enters the custody pipeline.",
+      "An investigator signs in, opens a case, and uploads a document, image, spreadsheet, or short audio clip. VerdictChain checks that the file type and size are allowed.",
+    result: "The file is accepted into the case safely.",
     Icon: UploadCloud,
     accent: "text-accent-blue",
     border: "border-accent-blue/30",
   },
   {
-    title: "2. Backend Hashes and Records",
+    title: "2. Create a Digital Fingerprint",
     detail:
-      "FastAPI computes the SHA-256 fingerprint from the raw bytes, sanitizes the filename, and persists evidence metadata, proof metadata, analysis records, and audit logs in PostgreSQL.",
-    result: "The file is represented by an immutable fingerprint in the database.",
+      "VerdictChain creates a SHA-256 fingerprint for that exact file. If even one character changes, the fingerprint changes too.",
+    result: "The case now has a reliable way to recognize the original file.",
     Icon: Fingerprint,
     accent: "text-accent-green",
     border: "border-accent-green/30",
   },
   {
-    title: "3. Tatum Sends Evidence to Walrus",
+    title: "3. Store the Evidence",
     detail:
-      "Evidence bytes are uploaded through the Tatum-backed Walrus storage path. The UI surfaces Tatum provider metadata, job id, blob id, and refreshable storage status.",
-    result: "The evidence artifact receives decentralized storage metadata.",
+      "Tatum is used to send the evidence into Walrus storage. The upload receipt shows the storage job and the Walrus blob reference when it is available.",
+    result: "The evidence has a storage trail that can be inspected from the app.",
     Icon: Cloud,
     accent: "text-accent-purple",
     border: "border-accent-purple/30",
   },
   {
-    title: "4. Sui Notary Seals the Hash",
+    title: "4. Save Proof on Sui",
     detail:
-      "The backend calls the Sui Move notary package from the configured Sui CLI signer. It submits the evidence hash, case id, and evidence id to the deployed devnet package.",
-    result: "A Sui transaction digest becomes the on-chain proof reference.",
+      "VerdictChain sends the file fingerprint to a small Sui program. This creates a public proof that the file fingerprint was registered.",
+    result: "The receipt can show that Sui recorded the evidence proof.",
     Icon: ShieldCheck,
     accent: "text-accent-yellow",
     border: "border-accent-yellow/30",
   },
   {
-    title: "5. OpenAI Extracts Media Signals",
+    title: "5. Read Images and Audio",
     detail:
-      "Images are decoded with Tesseract plus OpenAI vision. Audio is transcribed with OpenAI. This turns screenshots, scans, and clips into text that the forensic AI layer can reason over.",
-    result: "Readable media text and transcripts become evidence intelligence.",
+      "If the file is an image, OpenAI helps describe it and pull out visible text. If it is audio, OpenAI turns speech into text.",
+    result: "Hard-to-read media becomes useful case text.",
     Icon: ScanText,
     accent: "text-accent-blue",
     border: "border-accent-blue/30",
   },
   {
-    title: "6. DeepSeek Builds Investigation Artifacts",
+    title: "6. Create the Case Summary",
     detail:
-      "DeepSeek receives extracted evidence signals and generates summaries, entities, timelines, formatted reports, and relationship graphs. Generated AI artifacts are also stored through Walrus metadata.",
-    result: "The case workspace becomes an investigation dossier, not just a file vault.",
+      "DeepSeek uses the extracted text to create summaries, timelines, reports, important names, amounts, dates, and relationship graphs.",
+    result: "The case becomes easier to review, explain, and present.",
     Icon: Bot,
     accent: "text-accent-green",
     border: "border-accent-green/30",
@@ -95,115 +95,115 @@ const custodyStages = [
 
 const serviceRoles = [
   {
-    service: "Next.js Frontend",
-    role: "Investigator console and public verifier",
+    service: "Website",
+    role: "Where people use the product",
     use:
-      "Provides email auth screens, case vaults, upload receipts, evidence detail views, formatted DeepSeek reports, relationship graph views, and the public hash/file verifier.",
-    proof: "Hosted on Vercel at verdictchain.vercel.app.",
+      "This is the visible app: sign in, create cases, upload files, view receipts, read reports, inspect graphs, and verify files.",
+    proof: "Open verdictchain.vercel.app.",
     Icon: Code2,
     accent: "text-accent-blue",
   },
   {
-    service: "FastAPI Backend",
-    role: "Custody orchestrator",
+    service: "App Server",
+    role: "The main worker behind the app",
     use:
-      "Owns auth, rate limiting, file validation, SHA-256 hashing, database writes, Walrus upload calls, Sui proof calls, verification, and AI artifact generation.",
-    proof: "Railway-hosted API exposes /health and /api/* routes.",
+      "This receives uploads, checks files, creates fingerprints, saves records, talks to Tatum, talks to Sui, and asks AI services for summaries.",
+    proof: "The live app server is hosted on Railway.",
     Icon: Server,
     accent: "text-accent-green",
   },
   {
-    service: "PostgreSQL",
-    role: "Operational source of truth",
+    service: "Database",
+    role: "Keeps the case records",
     use:
-      "Stores users, case vaults, evidence rows, proof rows, AI analyses, timelines, reports, graphs, and immutable-style audit log entries.",
-    proof: "Every UI case, receipt, and verifier result comes from stored backend records.",
+      "Stores users, cases, evidence details, proof details, AI summaries, reports, graphs, and action history.",
+    proof: "Every case page and receipt is loaded from saved records.",
     Icon: Database,
     accent: "text-accent-purple",
   },
   {
-    service: "Tatum Walrus Data API",
-    role: "Walrus storage gateway",
+    service: "Tatum",
+    role: "Connects the app to Walrus and Sui",
     use:
-      "Uploads evidence and generated AI artifacts to the Walrus storage path, returning job ids, provider metadata, blob ids, and storage status.",
-    proof: "Upload receipts show Tatum job details and a Refresh Tatum Job action.",
+      "Tatum is used for Walrus upload jobs and Sui network checks. It gives the app job ids, blob ids, and status updates.",
+    proof: "Upload receipts show Tatum job details and a refresh action.",
     Icon: Cloud,
     accent: "text-accent-yellow",
   },
   {
     service: "Walrus",
-    role: "Decentralized artifact storage",
+    role: "Stores evidence and AI files",
     use:
-      "Holds evidence artifact references and AI JSON artifact references so the case has storage-backed custody metadata beyond the relational database.",
-    proof: "Evidence rows and AI artifact rows display Walrus blob ids when available.",
+      "Walrus holds references for uploaded evidence and generated AI files, such as reports and graph data.",
+    proof: "Evidence and AI sections show Walrus blob ids when available.",
     Icon: ReceiptText,
     accent: "text-accent-green",
   },
   {
-    service: "Sui Move Notary",
-    role: "Tamper-evident proof contract",
+    service: "Sui",
+    role: "Records proof that a file was registered",
     use:
-      "The Move package seals evidence hashes with case and evidence identifiers. The live deployment is currently configured on Sui devnet.",
+      "VerdictChain stores the file fingerprint on Sui so there is a public proof tied to the evidence.",
     proof:
-      "Package 0x5f8a69e8004ee5aa943dccaf5b0fa336dfffcf5b320aa13b081b772ecaf5b823.",
+      "The live demo uses a Sui devnet package.",
     Icon: Shield,
     accent: "text-accent-blue",
   },
   {
-    service: "Tatum Sui RPC",
-    role: "Sui read and verification path",
+    service: "Tatum Sui Gateway",
+    role: "Checks Sui proof status",
     use:
-      "Routes Sui transaction and chain checks through the configured Tatum Sui devnet RPC gateway instead of relying on an untracked public RPC.",
-    proof: "Configured RPC target: https://sui-devnet.gateway.tatum.io.",
+      "When the app needs to check Sui proof status, it uses Tatum's Sui gateway.",
+    proof: "The app server is configured to use Tatum's Sui devnet gateway.",
     Icon: Network,
     accent: "text-accent-purple",
   },
   {
     service: "OpenAI",
-    role: "Media extraction layer",
+    role: "Reads images and audio",
     use:
-      "Handles image understanding and audio transcription before DeepSeek receives the evidence context. This makes screenshots, scans, and audio useful in the case graph and report.",
-    proof: "Evidence analysis metadata records OpenAI vision/audio fields.",
+      "OpenAI helps pull text and meaning out of images, screenshots, scanned pages, and audio clips.",
+    proof: "Upload an image or audio file and check the evidence analysis panel.",
     Icon: Sparkles,
     accent: "text-accent-yellow",
   },
   {
     service: "DeepSeek",
-    role: "Forensic reasoning layer",
+    role: "Writes the investigation analysis",
     use:
-      "Generates evidence summaries, entities, timelines, formatted reports, risk flags, recommendations, and graph-ready intelligence from extracted evidence signals.",
-    proof: "Case workspace can generate report, timeline, and graph artifacts.",
+      "DeepSeek turns the evidence text into a readable report, timeline, key findings, risk notes, and relationship graph.",
+    proof: "Open a case workspace and generate a report, timeline, or graph.",
     Icon: Cpu,
     accent: "text-accent-green",
   },
 ];
 
 const verificationSteps = [
-  "The verifier hashes the uploaded file locally in the browser or accepts a pasted SHA-256 hash.",
-  "FastAPI looks for the fingerprint in registered evidence records.",
-  "The API returns case metadata, proof metadata, Sui transaction state, Walrus state, and match status.",
-  "If one byte changes, the SHA-256 hash changes and the verifier fails to find the registered evidence.",
+  "The verifier creates a fingerprint for the uploaded file, or checks a pasted fingerprint.",
+  "VerdictChain looks for that fingerprint in saved evidence records.",
+  "The result shows whether the file matches a registered case, plus any storage and Sui proof details.",
+  "If one byte changes, the fingerprint changes and the file no longer matches the original record.",
 ];
 
 const guardrails = [
   {
-    title: "AI rate limiting",
-    text: "Upload, timeline, report, and graph generation are limited to 8 AI-heavy requests per user per 60 seconds.",
+    title: "AI usage limits",
+    text: "Uploads and AI generation are limited to 8 heavy requests per user per minute, so the demo stays stable.",
     Icon: Gauge,
   },
   {
-    title: "JWT sessions",
-    text: "Email/password auth issues backend JWTs. Case, upload, evidence, report, timeline, and graph routes require the current user.",
+    title: "Signed-in case access",
+    text: "Users sign in with email and password. Private case pages and uploads require an active session.",
     Icon: KeyRound,
   },
   {
-    title: "Separation of duties",
-    text: "Files, hashes, storage metadata, proof transactions, and AI artifacts are recorded separately so each layer can be inspected.",
+    title: "Separate proof trail",
+    text: "The file, fingerprint, storage result, Sui proof, and AI report are saved separately so each part can be checked.",
     Icon: Workflow,
   },
   {
     title: "Readable presentation",
-    text: "DeepSeek data is stored as structured JSON but rendered as a readable forensic dossier in the case workspace.",
+    text: "DeepSeek returns structured data, but the case workspace shows it as a readable report instead of raw JSON.",
     Icon: FileSearch,
   },
 ];
@@ -274,13 +274,13 @@ export default function HowItWorksPage() {
         <section className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-16 lg:grid-cols-12 lg:py-20">
           <div className="lg:col-span-7">
             <Badge variant="active" className="mb-5 uppercase tracking-widest">
-              Architecture Walkthrough
+              Simple Walkthrough
             </Badge>
             <h1 className="max-w-4xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
-              How VerdictChain turns one evidence file into a verifiable custody trail.
+              How VerdictChain proves a file has not been changed.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-zinc-400">
-              This page explains the full system path for reviewers: what runs in the browser, what the backend owns, how Tatum and Walrus are used, where Sui fits, and how OpenAI plus DeepSeek convert raw evidence into investigation intelligence.
+              This page keeps the explanation simple: what happens when someone uploads evidence, how the app stores it, how proof is created, and how AI helps turn raw files into a useful case summary.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -304,20 +304,20 @@ export default function HowItWorksPage() {
               <div className="border-b border-border/40 pb-3">
                 <div className="flex items-center gap-2 text-sm font-bold text-white">
                   <Activity className="h-4 w-4 text-accent-green" />
-                  Live Deployment Snapshot
+                  Live Demo Snapshot
                 </div>
               </div>
               <div className="mt-4 space-y-3 text-xs">
                 <div className="rounded-lg border border-border/60 bg-black/30 p-3">
-                  <div className="font-bold uppercase tracking-widest text-zinc-500">Frontend</div>
+                  <div className="font-bold uppercase tracking-widest text-zinc-500">Website</div>
                   <div className="mt-1 break-all font-mono text-accent-blue">verdictchain.vercel.app</div>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-black/30 p-3">
-                  <div className="font-bold uppercase tracking-widest text-zinc-500">Backend</div>
+                  <div className="font-bold uppercase tracking-widest text-zinc-500">App Server</div>
                   <div className="mt-1 break-all font-mono text-accent-green">api-production-0b30.up.railway.app</div>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-black/30 p-3">
-                  <div className="font-bold uppercase tracking-widest text-zinc-500">Sui Devnet Package</div>
+                  <div className="font-bold uppercase tracking-widest text-zinc-500">Sui Proof Program</div>
                   <div className="mt-1 break-all font-mono text-zinc-300">
                     0x5f8a69e8004ee5aa943dccaf5b0fa336dfffcf5b320aa13b081b772ecaf5b823
                   </div>
@@ -331,11 +331,11 @@ export default function HowItWorksPage() {
           <div className="mx-auto max-w-7xl px-6">
             <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <Badge variant="glow-blue">End-to-End Flow</Badge>
-                <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">The custody pipeline</h2>
+                <Badge variant="glow-blue">Step by Step</Badge>
+                <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">What happens after upload</h2>
               </div>
               <p className="max-w-2xl text-sm leading-7 text-zinc-400">
-                Every major action writes a record, a proof, a storage reference, or an AI artifact. The result is a case workspace that can be explained step by step.
+                Each step adds something useful: a file record, a fingerprint, a storage receipt, a Sui proof, or a readable AI summary.
               </p>
             </div>
 
@@ -352,7 +352,7 @@ export default function HowItWorksPage() {
                     </div>
                   </div>
                   <div className="mt-4 rounded-lg border border-border/60 bg-black/25 px-3 py-2 text-[11px] leading-5 text-zinc-300">
-                    <span className="font-bold text-zinc-500">Output: </span>
+                    <span className="font-bold text-zinc-500">What you get: </span>
                     {stage.result}
                   </div>
                 </div>
@@ -363,31 +363,31 @@ export default function HowItWorksPage() {
 
         <section className="mx-auto max-w-7xl px-6 py-16">
           <div className="mb-8 text-center">
-            <Badge variant="glow-blue">System Map</Badge>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">What talks to what</h2>
+            <Badge variant="glow-blue">Product Map</Badge>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">What each part does</h2>
             <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-zinc-400">
-              The browser never needs blockchain knowledge. FastAPI is the coordinator that turns user actions into storage jobs, proof transactions, AI extraction, and verification responses.
+              Users only see a clean app. Behind the scenes, VerdictChain asks the right service to store files, save proof, read media, or create the case report.
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr]">
             <FlowNode
-              label="Browser UI"
-              detail="Next.js renders the landing page, auth, upload console, case workspace, formatted report, graph, and public verifier."
+              label="What the user sees"
+              detail="The website shows login, cases, uploads, receipts, reports, graphs, and the public verifier."
               Icon={FileText}
             />
-            <ArrowPill label="JWT + file" />
+            <ArrowPill label="upload" />
             <FlowNode
-              label="FastAPI Orchestrator"
-              detail="Validates, hashes, stores metadata, rate-limits AI-heavy work, calls Tatum, calls Sui, calls OpenAI, and calls DeepSeek."
+              label="App Server"
+              detail="The server checks the file, creates the fingerprint, saves records, and sends work to the other services."
               Icon={Server}
               className="border-accent-green/30"
             />
-            <ArrowPill label="external APIs" />
+            <ArrowPill label="service calls" />
             <div className="space-y-4">
-              <FlowNode label="Tatum + Walrus" detail="Stores evidence and AI artifacts, then returns job and blob metadata." Icon={Cloud} />
-              <FlowNode label="Sui + Tatum RPC" detail="Seals evidence hashes and verifies Sui transaction state through Tatum RPC." Icon={Network} />
-              <FlowNode label="OpenAI + DeepSeek" detail="Extracts media signals, then builds summaries, reports, timelines, entities, and graphs." Icon={Bot} />
+              <FlowNode label="Tatum + Walrus" detail="Stores files and gives the app a storage receipt." Icon={Cloud} />
+              <FlowNode label="Sui" detail="Records proof that the file fingerprint was registered." Icon={Network} />
+              <FlowNode label="OpenAI + DeepSeek" detail="Reads media and writes the case summary, report, timeline, and graph." Icon={Bot} />
             </div>
           </div>
         </section>
@@ -396,11 +396,11 @@ export default function HowItWorksPage() {
           <div className="mx-auto max-w-7xl px-6">
             <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <Badge variant="glow-blue">Service Responsibilities</Badge>
-                <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">How each service is used</h2>
+                <Badge variant="glow-blue">Tools Used</Badge>
+                <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">Why each service is here</h2>
               </div>
               <p className="max-w-xl text-sm leading-7 text-zinc-400">
-                VerdictChain deliberately separates user experience, custody records, storage proofs, chain proofs, and AI reasoning.
+                Each service has a clear job. The app stays understandable because storage, proof, verification, and AI analysis are not mixed together.
               </p>
             </div>
 
@@ -418,7 +418,7 @@ export default function HowItWorksPage() {
                   </div>
                   <p className="mt-4 text-xs leading-6 text-zinc-400">{item.use}</p>
                   <div className="mt-4 rounded-lg border border-border/60 bg-black/25 px-3 py-2 text-[11px] leading-5 text-zinc-300">
-                    <span className="font-bold text-zinc-500">Where reviewers see it: </span>
+                    <span className="font-bold text-zinc-500">Where to see it: </span>
                     {item.proof}
                   </div>
                 </div>
@@ -432,10 +432,10 @@ export default function HowItWorksPage() {
             <Badge variant="glow-blue">Verification</Badge>
             <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">Why tampering is easy to demonstrate</h2>
             <p className="mt-3 text-sm leading-7 text-zinc-400">
-              The public verifier does not trust filenames, screenshots, or user claims. It only trusts the computed fingerprint and the backend records attached to that fingerprint.
+              The verifier does not rely on filenames or screenshots. It checks the file fingerprint. If the file changes, the fingerprint changes.
             </p>
             <div className="mt-6 rounded-lg border border-accent-green/25 bg-accent-green/5 p-4 text-xs leading-6 text-zinc-300">
-              Demo move: upload the provided sample text, verify it, change one character, and verify again. The second file produces a different SHA-256 hash and fails the registered evidence lookup.
+              Demo move: upload the sample text file, verify it, change one character, and verify again. The changed file will no longer match the original evidence record.
             </div>
           </div>
 
@@ -456,8 +456,8 @@ export default function HowItWorksPage() {
         <section className="border-y border-border/40 bg-black/25 py-16">
           <div className="mx-auto max-w-7xl px-6">
             <div className="mb-8 text-center">
-              <Badge variant="glow-blue">Production Guardrails</Badge>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">What keeps the demo controlled</h2>
+              <Badge variant="glow-blue">Safety Checks</Badge>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">What keeps the demo steady</h2>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -478,10 +478,10 @@ export default function HowItWorksPage() {
               <div className="lg:col-span-8">
                 <div className="flex items-center gap-2 text-sm font-bold text-white">
                   <Route className="h-4 w-4 text-accent-green" />
-                  Suggested walkthrough
+                  Suggested demo flow
                 </div>
                 <p className="mt-3 text-sm leading-7 text-zinc-400">
-                  Start on this page, then create a case, upload a synthetic file, inspect the Tatum/Walrus receipt, open the case workspace, generate the DeepSeek report, and finish by verifying the original and modified files in the public verifier.
+                  Start here, create a case, upload a sample file, show the Tatum/Walrus receipt, open the case report, then verify the original and edited files in the public verifier.
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row lg:col-span-4 lg:justify-end">
